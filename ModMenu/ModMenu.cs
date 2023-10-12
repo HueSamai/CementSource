@@ -67,7 +67,7 @@ namespace CementTools.ModMenuTools
             MODMENU.SetActive(false);
 
             MODMENU.transform.Find("Scroll View/Close").GetComponent<Button>().onClick.AddListener(Disable);
-            MODMENU.transform.Find("Scroll View/ClearCache").GetComponent<Button>().onClick.AddListener(Cement.ClearCache);
+            //MODMENU.transform.Find("Scroll View/ClearCache").GetComponent<Button>().onClick.AddListener(Cement.ClearCache);
 
             _contentParent = MODMENU.transform.Find("Scroll View/Viewport/Content");
 
