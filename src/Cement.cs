@@ -311,6 +311,7 @@ namespace CementTools
             Button creditsButton = textSection.Find("Credits").GetComponent<Button>();
             Button settingsButton = textSection.Find("Settings").GetComponent<Button>();
             Button costumesButton = textSection.Find("Costumes").GetComponent<Button>();
+            Button quitButton = textSection.Find("Quit").GetComponent<Button>();
 
             Cement.Log("Just past getting the buttons");
 
@@ -336,7 +337,7 @@ namespace CementTools
 
             cementButtonNav.selectOnUp = settingsButton;
             cementButtonNav.selectOnDown = creditsButton;
-            creditsButtonNav.selectOnDown = creditsButton;
+            creditsButtonNav.selectOnDown = quitButton;
             creditsButtonNav.selectOnUp = button;
             settingsButtonNav.selectOnDown = button;
             settingsButtonNav.selectOnUp = costumesButton;
