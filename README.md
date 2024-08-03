@@ -8,7 +8,7 @@ This is the source code for the Cement modding tool for Gang Beasts. **To instal
 
 > **NOTE:** The terms "folder" and "directory" are used interchangeably, but they mean the same thing.
 
-1. **Ensure you have installed the latest 0.6.x release of MelonLoader seperately already and run the game with it at least once.** MelonLoader does not come provided with this repository.
+1. **Ensure you have installed the latest 0.6.x release of MelonLoader separately already and run the game with it at least once.** MelonLoader does not come provided with this repository.
 2. Clone this repository into an empty directory.
 3. Create a file called `game_dir.txt` at the root of the cloned repository (the folder that contains `CementMod`, `CementInstaller`, and `CementPlugin`) and write the path to your Gang Beasts folder (or Staging folder) in it.
 4. Open the solution in your preferred C# IDE (VS Code, Visual Studio, Rider, etc) and run `dotnet restore` in the terminal. This should copy all needed references from your game directory and vanquish a bunch of missing reference errors.
