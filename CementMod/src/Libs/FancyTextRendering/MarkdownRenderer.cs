@@ -40,14 +40,6 @@ namespace LogicUI.FancyTextRendering
             RenderText();
         }
 
-        private void Awake()
-        {
-            if (gameObject.name == "SummaryText")
-            {
-                gameObject.AddComponent<SummaryMarkdownController>();
-            }
-        }
-
         public MarkdownRenderingSettings RenderSettings = MarkdownRenderingSettings.Default;
 
         private void RenderText()

@@ -3,6 +3,7 @@ using MelonLoader.Utils;
 using Mono.Cecil;
 using System;
 using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Net.Http;
 using System.Text.Json.Nodes;
@@ -32,6 +33,11 @@ public class Plugin : MelonPlugin
     private static readonly MelonPreferences_Entry _offlineModePref = _melonCat.CreateEntry(nameof(_offlineModePref), false);
     private static readonly MelonPreferences_Entry _devModePref = _melonCat.CreateEntry(nameof(_devModePref), false);
 
+    public override void OnPreSupportModule()
+    {
+        base.OnPreSupportModule();
+    }
+
     public override async void OnApplicationEarlyStart()
     {
         base.OnPreModsLoaded();
@@ -55,7 +61,7 @@ public class Plugin : MelonPlugin
             {
                 // Analyze MelonInfoAttribute constructor for local version and download link
                 var module = ModuleDefinition.ReadModule(file);
-                if (module == null) continue;
+                if (module is null) continue;
 
                 var infoAttr = module.GetCustomAttributes().First(x => x.AttributeType.FullName == typeof(MelonInfoAttribute).FullName) ?? throw new Exception($"{file} does not contain a MelonInfoAttribute.");
 
@@ -82,7 +88,7 @@ public class Plugin : MelonPlugin
                 var latestReleaseTagName = latestReleaseTagNameJson?.GetValue<string>() ?? throw new Exception("tag_name of API response has no string value!");
                 var remoteVersion = ParseVersionFromTagName(latestReleaseTagName);
 
-                if (remoteVersion < localVersionObj) continue;
+                if (remoteVersion <= localVersionObj) continue;
 
                 // TODO: Ask user if they want to update mod
 
@@ -93,14 +99,38 @@ public class Plugin : MelonPlugin
                     var assetName = asset["name"]?.AsValue()?.GetValue<string>();
 
                     if (string.IsNullOrWhiteSpace(assetName)) continue;
-                    if (!assetName.EndsWith(".dll")) continue;
 
-                    // TODO: Download assembly and restart game
+                    var assetDownloadUrl = asset["browser_download_url"]?.AsValue()?.GetValue<string>();
+                    if (assetDownloadUrl is null) continue;
+
+                    var assetDownloadResponse = await updaterClient.GetAsync(assetDownloadUrl);
+                    assetDownloadResponse.EnsureSuccessStatusCode();
+
+                    var assetLocalPath = Path.Combine(cementBinPath, assetName);
+
+                    using var stream = await assetDownloadResponse.Content.ReadAsStreamAsync();
+                    using var fs = File.Create(assetLocalPath);
+                    await stream.CopyToAsync(fs);
+                    fs.Flush();
+
+                    if (assetName.EndsWith(".dll"))
+                    {
+                        File.Move(assetLocalPath, MelonEnvironment.ModsDirectory);
+                    }
+                    else if (assetName.EndsWith(".zip"))
+                    {
+                        ZipFile.ExtractToDirectory(assetLocalPath, MelonEnvironment.GameRootDirectory);
+                    }
+                    else
+                    {
+                        File.Delete(assetLocalPath);
+                        continue;
+                    }
                 }
             }
             catch (Exception e)
             {
-                LoggerInstance.Warning($"Failed to update {file}: ", e);
+                LoggerInstance.Error($"Failed to update {file}: ", e);
             }
         }
 

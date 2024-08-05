@@ -1,6 +1,7 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
-using MelonLoader;
 
 namespace CementGB.Mod.Utilities;
 
@@ -10,14 +11,13 @@ public static class FileUtilities
     {
         assembly ??= Assembly.GetCallingAssembly();
 
-        using var stream = assembly.GetManifestResourceStream(resourceName);
-        if (stream == null)
+        if (assembly.GetManifestResourceNames().Contains(resourceName))
         {
-            Melon<Mod>.Logger.Warning($"Assembly {assembly.FullName} failed to find embedded resource {resourceName} within. Ensure the resource name is correct.");
-            return null;
-        }
-        using var reader = new StreamReader(stream);
+            using var str = assembly.GetManifestResourceStream(resourceName) ?? throw new Exception("Resource stream returned null. This could mean an inaccessible resource caller-side or an invalid argument was passed.");
+            using var reader = new StreamReader(str);
 
-        return reader.ReadToEnd();
+            return reader.ReadToEnd();
+        }
+        throw new Exception($"No resources matching the name '{resourceName}' were found in the assembly '{assembly.FullName}'. Please ensure you passed the correct name.");
     }
 }

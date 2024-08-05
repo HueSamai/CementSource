@@ -36,30 +36,21 @@ public static class AssetBundleUtilities
         }));
     }
 
-    public static AssetBundle? LoadEmbeddedAssetBundle(Assembly assembly, string name)
+    public static AssetBundle LoadEmbeddedAssetBundle(Assembly assembly, string name)
     {
-        string[] manifestResources = assembly.GetManifestResourceNames();
-        AssetBundle? bundle = null;
-        if (manifestResources.Contains(name))
+        if (assembly.GetManifestResourceNames().Contains(name))
         {
-            Melon<Mod>.Logger.Msg($"Loading embedded resource data {name}...");
-            using var str = assembly.GetManifestResourceStream(name);
-            if (str is null)
-            {
-                Melon<Mod>.Logger.Warning($"Manifest resource returned null stream. How did this happen?");
-                return null;
-            }
-
+            using var str = assembly.GetManifestResourceStream(name) ?? throw new Exception("Resource stream returned null. This could mean an inaccessible resource caller-side or an invalid argument was passed.");
             using var memoryStream = new MemoryStream();
-
             str.CopyTo(memoryStream);
             Melon<Mod>.Logger.Msg("Done!");
             byte[] resource = memoryStream.ToArray();
 
             Melon<Mod>.Logger.Msg($"Loading assetBundle from data {name}, please be patient...");
-            bundle = AssetBundle.LoadFromMemory(resource);
+            var bundle = AssetBundle.LoadFromMemory(resource);
             Melon<Mod>.Logger.Msg("Done!");
+            return bundle;
         }
-        return bundle;
+        throw new Exception($"No resources matching the name '{name}' were found in the assembly '{assembly.FullName}'. Please ensure you passed the correct name.");
     }
 }

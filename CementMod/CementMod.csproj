@@ -53,6 +53,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Remove="Assets\CreditsText.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <GameDirFile Include="..\game_dir.txt"></GameDirFile>
   </ItemGroup>
 
@@ -68,12 +72,7 @@
     have these
     folders already if you are contributing)
     -->
-    <Exec
-      Command="xcopy &quot;$(GameDir)\MelonLoader\net6\&quot; &quot;.\ref\net6\&quot; /s /e /y"></Exec>
-    <Exec
-      Command="xcopy &quot;$(GameDir)\MelonLoader\Il2CppAssemblies\&quot; &quot;.\ref\Il2CppAssemblies\&quot; /s /e /y"></Exec>
-
-    <Exec Command="echo Reference restore from game directory successful!"></Exec>
+    <Exec Command=".\ref\copy_refs.bat &quot;$(GameDir)&quot;"></Exec>
   </Target>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">

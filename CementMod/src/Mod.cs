@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2Cpp;
 using MelonLoader;
 using MelonLoader.Utils;
 using System.IO;
@@ -20,19 +21,73 @@ public class Mod : MelonMod
 {
     public static readonly string userDataPath = Path.Combine(MelonEnvironment.UserDataDirectory, "CementGB");
 
-    internal static GameObject? cementCompContainer;
-    internal static AssetBundle? cementAssetBundle;
+    public static bool DevMode 
+    {
+        get
+        {
+            return _devModeEntry.GetValueAsString() == "true";
+        }
+    }
+
+    internal static GameObject CementCompContainer
+    {
+        get
+        {
+            if (_cementCompContainer == null)
+            {
+                _cementCompContainer = new GameObject("CMTSingletons");
+            }
+            return _cementCompContainer;
+        }
+        set
+        {
+            Object.Destroy(_cementCompContainer);
+            _cementCompContainer = value;
+        }
+    }
+    private static GameObject? _cementCompContainer;
 
     private static readonly MelonPreferences_Category _melonCat = MelonPreferences.CreateCategory("cement_prefs", "CementGB");
-    private static readonly MelonPreferences_Entry _offlineModePref = _melonCat.CreateEntry(nameof(_offlineModePref), false);
+    private static readonly MelonPreferences_Entry _devModeEntry = _melonCat.CreateEntry("DevMode", false, "Developer Mode");
+
+    internal AssetBundle CementAssetBundle
+    {
+        get
+        {
+            if (_cementAssetBundle == null)
+            {
+                _cementAssetBundle = AssetBundleUtilities.LoadEmbeddedAssetBundle(MelonAssembly.Assembly, "CementGB.Mod.Assets.cement.bundle");
+            }
+            return _cementAssetBundle;
+        }
+        set
+        {
+            if (_cementAssetBundle != value)
+                Object.Destroy(_cementAssetBundle);
+            _cementAssetBundle = value;
+        }
+    }
+    private AssetBundle? _cementAssetBundle;
 
     public override void OnInitializeMelon()
     {
         base.OnInitializeMelon();
 
         FileStructure();
-        cementAssetBundle = AssetBundleUtilities.LoadEmbeddedAssetBundle(MelonAssembly.Assembly, "CementMod.Assets.cement.bundle");
+    }
+
+    public override void OnLateInitializeMelon()
+    {
+        base.OnLateInitializeMelon();
+
         CreateCementComponents();
+    }
+
+    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
+    {
+        base.OnSceneWasLoaded(buildIndex, sceneName);
+
+        LoggerInstance.Msg($"Scene {sceneName} loaded.");
     }
 
     private static void FileStructure()
@@ -43,12 +98,8 @@ public class Mod : MelonMod
 
     private static void CreateCementComponents()
     {
-        if (cementCompContainer != null) return;
-
-        cementCompContainer = new("CementGB");
-        Object.DontDestroyOnLoad(cementCompContainer);
-        cementCompContainer.hideFlags = HideFlags.DontUnloadUnusedAsset;
-
-        // Attach Cement MonoBehaviours
+        CementCompContainer = new("CMTSingletons");
+        Object.DontDestroyOnLoad(CementCompContainer);
+        CementCompContainer.hideFlags = HideFlags.DontUnloadUnusedAsset;
     }
 }

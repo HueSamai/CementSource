@@ -55,7 +55,7 @@ namespace JimmysUnityUtilities.Collections
         }
         public int Add(object value)
         {
-            if (!(value is T item)) // todo use is not pattern when we c# 9
+            if (!(value is T item))
                 throw new ArgumentException("Value was wrong type!", nameof(value));
 
             if (Add(item))
@@ -77,7 +77,7 @@ namespace JimmysUnityUtilities.Collections
         }
         public void Remove(object value)
         {
-            if (!(value is T item)) // todo use is not pattern when we c# 9
+            if (!(value is T item))
                 throw new ArgumentException("Value was wrong type!", nameof(value));
 
             Remove(item);
@@ -96,7 +96,7 @@ namespace JimmysUnityUtilities.Collections
         public int IndexOf(T item) => _List.IndexOf(item);
         public int IndexOf(object value)
         {
-            if (!(value is T item)) // todo use is not pattern when we c# 9
+            if (!(value is T item))
                 throw new ArgumentException("Value was wrong type!", nameof(value));
 
             return IndexOf(item);
@@ -105,7 +105,7 @@ namespace JimmysUnityUtilities.Collections
         public bool Contains(T item) => _HashSet.Contains(item);
         public bool Contains(object value)
         {
-            if (!(value is T item)) // todo use is not pattern when we c# 9
+            if (!(value is T item))
                 throw new ArgumentException("Value was wrong type!", nameof(value));
 
             return Contains(item);
@@ -122,7 +122,7 @@ namespace JimmysUnityUtilities.Collections
         }
         public void Insert(int index, object value)
         {
-            if (!(value is T item)) // todo use is not pattern when we c# 9
+            if (!(value is T item))
                 throw new ArgumentException("Value was wrong type!", nameof(value));
 
             Insert(index, item);
@@ -145,7 +145,7 @@ namespace JimmysUnityUtilities.Collections
             get => this[index];
             set
             {
-                if (!(value is T item)) // todo use is not pattern when we c# 9
+                if (!(value is T item))
                     throw new ArgumentException("Value was wrong type!", nameof(value));
 
                 this[index] = item;

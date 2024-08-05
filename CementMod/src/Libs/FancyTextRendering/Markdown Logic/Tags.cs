@@ -54,11 +54,13 @@ namespace LogicUI.FancyTextRendering.MarkdownLogic
             if (settings.Monospace.UseCustomFont)
                 tag += $"<font=\"{settings.Monospace.FontAssetPathRelativeToResources}\">";
 
+            /*
             if (settings.Monospace.DrawOverlay)
             {
                 var padding = settings.Monospace.OverlayPaddingPixels;
                 tag += $"<mark=#{ColorUtility.ToHtmlStringRGBA(settings.Monospace.OverlayColor)} padding=\"{padding},{padding},0,0\">";
             }
+            */ // TODO: Fix monospace overlay (throws IndexOutOfRangeException in ColorUtility.ToHtmlStringRGBA)
 
             if (settings.Monospace.ManuallySetCharacterSpacing)
                 tag += $"<mspace={settings.Monospace.CharacterSpacing}em>";
