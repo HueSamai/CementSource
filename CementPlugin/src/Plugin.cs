@@ -31,12 +31,7 @@ public class Plugin : MelonPlugin
 
     private static readonly MelonPreferences_Category _melonCat = MelonPreferences.CreateCategory("cement_prefs", "CementGB");
     private static readonly MelonPreferences_Entry _offlineModePref = _melonCat.CreateEntry(nameof(_offlineModePref), false);
-    private static readonly MelonPreferences_Entry _devModePref = _melonCat.CreateEntry(nameof(_devModePref), false);
-
-    public override void OnPreSupportModule()
-    {
-        base.OnPreSupportModule();
-    }
+    private static readonly MelonPreferences_Entry _devModePref = _melonCat.CreateEntry("DevMode", false, "Developer Mode");
 
     public override async void OnApplicationEarlyStart()
     {

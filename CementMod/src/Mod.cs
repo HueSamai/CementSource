@@ -1,5 +1,5 @@
-﻿using CementGB.Mod.Utilities;
-using Il2Cpp;
+﻿using CementGB.Mod.Testing;
+using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
 using System.IO;
@@ -21,14 +21,6 @@ public class Mod : MelonMod
 {
     public static readonly string userDataPath = Path.Combine(MelonEnvironment.UserDataDirectory, "CementGB");
 
-    public static bool DevMode 
-    {
-        get
-        {
-            return _devModeEntry.GetValueAsString() == "true";
-        }
-    }
-
     internal static GameObject CementCompContainer
     {
         get
@@ -46,9 +38,6 @@ public class Mod : MelonMod
         }
     }
     private static GameObject? _cementCompContainer;
-
-    private static readonly MelonPreferences_Category _melonCat = MelonPreferences.CreateCategory("cement_prefs", "CementGB");
-    private static readonly MelonPreferences_Entry _devModeEntry = _melonCat.CreateEntry("DevMode", false, "Developer Mode");
 
     internal AssetBundle CementAssetBundle
     {
@@ -69,6 +58,21 @@ public class Mod : MelonMod
     }
     private AssetBundle? _cementAssetBundle;
 
+    internal AssetBundle? TestAssetBundle
+    {
+        get
+        {
+            if (_testAssetBundle == null)
+            {
+                _testAssetBundle = AssetBundleUtilities.LoadEmbeddedAssetBundle(MelonAssembly.Assembly, "CementGB.Mod.Assets.testmap.bundle");
+            }
+            return _testAssetBundle;
+        }
+    }
+    private AssetBundle? _testAssetBundle;
+
+    internal string[] TestAssetBundleScenePaths => TestAssetBundle?.GetAllScenePaths();
+
     public override void OnInitializeMelon()
     {
         base.OnInitializeMelon();
@@ -81,6 +85,7 @@ public class Mod : MelonMod
         base.OnLateInitializeMelon();
 
         CreateCementComponents();
+        TestMap.Register();
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -93,7 +98,7 @@ public class Mod : MelonMod
     private static void FileStructure()
     {
         Directory.CreateDirectory(userDataPath);
-        _melonCat.SetFilePath(Path.Combine(userDataPath, "CementPrefs.cfg"));
+        //_melonCat.SetFilePath(Path.Combine(userDataPath, "CementPrefs.cfg"));
     }
 
     private static void CreateCementComponents()

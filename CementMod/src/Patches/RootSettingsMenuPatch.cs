@@ -35,6 +35,7 @@ public static class RootSettingsMenuPatch
             var cementButtonComp = cementButton.GetComponent<Button>();
             cementButtonComp.onClick = new Button.ButtonClickedEvent();
 
+            // Add new events
             cementButtonComp.onClick.AddListener(new Action(static () =>
             {
                 CementMenuManager.MenuCanvas?.SetActive(!CementMenuManager.MenuCanvas.active);

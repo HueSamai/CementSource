@@ -1,8 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Collections.Immutable;
 using Il2CppGB.Gamemodes;
 using MelonLoader;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CementGB.Mod.Modules;
 
@@ -10,8 +10,11 @@ public class CustomScene
 {
     public static event Action<CustomScene>? OnRegister;
 
-    public static ImmutableArray<CustomScene> CustomScenes => _customScenes.ToImmutableArray();
+    public static CustomScene[] CustomScenes => _customScenes.ToArray();
     private static readonly List<CustomScene> _customScenes = new();
+
+    public static bool IsCustomSceneName(string name) => CustomScenes.Any(scene => scene.name == name);
+    public static CustomScene[] GetCustomScenesByName(string name) => CustomScenes.Where(scene => scene.name == name).ToArray();
 
     public static void RegisterScene(CustomScene scene)
     {
