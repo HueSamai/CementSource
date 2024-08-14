@@ -13,5 +13,5 @@ using BuildInfo = CementGB.Mod.BuildInfo;
 [assembly: AssemblyFileVersion(BuildInfo.Version)]
 
 [assembly: MelonInfo(typeof(Mod), BuildInfo.Name, BuildInfo.Version, BuildInfo.Author, BuildInfo.DownloadLink)]
-[assembly: MelonColor(121, 206, 212, 84)]
+[assembly: MelonColor(0, 99, 198, 255)]
 [assembly: MelonGame("Boneloaf", "Gang Beasts")]
