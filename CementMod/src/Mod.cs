@@ -1,5 +1,4 @@
-﻿using CementGB.Mod.Testing;
-using CementGB.Mod.Utilities;
+﻿using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
 using System.IO;
@@ -58,7 +57,7 @@ public class Mod : MelonMod
     }
     private AssetBundle? _cementAssetBundle;
 
-    internal AssetBundle? TestAssetBundle
+    internal AssetBundle TestAssetBundle
     {
         get
         {
@@ -85,7 +84,6 @@ public class Mod : MelonMod
         base.OnLateInitializeMelon();
 
         CreateCementComponents();
-        TestMap.Register();
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)

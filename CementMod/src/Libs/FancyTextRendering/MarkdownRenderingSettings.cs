@@ -35,7 +35,7 @@ namespace LogicUI.FancyTextRendering
         [Serializable]
         public class MonospaceSettings
         {
-            public bool RenderMonospace = true;
+            public bool RenderMonospace = false; // TODO: Fix monospace (ref: Markdown.cs)
 
             public bool UseCustomFont = true;
 

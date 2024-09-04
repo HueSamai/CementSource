@@ -18,10 +18,7 @@ public class CementMenuManager : MonoBehaviour
     {
         get
         {
-            if (_menuCanvas == null)
-            {
-                _menuCanvas = Create();
-            }
+            _menuCanvas ??= Create();
             return _menuCanvas;
         }
         private set

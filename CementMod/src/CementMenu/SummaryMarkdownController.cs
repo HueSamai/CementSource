@@ -1,9 +1,9 @@
-using CementGB.Mod.Utilities;
 using MelonLoader;
 using System.Reflection;
 using LogicUI.FancyTextRendering;
 using UnityEngine;
 using System;
+using CementGB.Mod.Utilities;
 
 namespace CementGB.Mod.CementMenu;
 

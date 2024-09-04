@@ -1,7 +1,7 @@
-using System.Reflection;
-using MelonLoader;
 using HarmonyLib;
+using MelonLoader;
 using System;
+using System.Reflection;
 
 namespace CementGB.Mod.Modules;
 
@@ -18,10 +18,17 @@ public static class HookModule
     {
         public MethodInfo original;
         public MethodInfo hook;
-        public MelonMod callingMod;
+        public MelonMod? callingMod;
         public bool isPrefix;
 
-        public CementHook(MethodInfo original, MelonMod callingMod, MethodInfo hook, bool isPrefix) : this()
+        /// <summary>
+        /// Creates CementHook parameter info to later pass to <see cref="CreateHook(CementHook, bool)"/>.
+        /// </summary>
+        /// <param name="original">Original (typically base-game) method to patch.</param>
+        /// <param name="callingMod">The mod making this patch. Used to toggle the patch on/off with the mod.</param>
+        /// <param name="hook">The method containing the code to insert before or after the <paramref name="original"/> method.</param>
+        /// <param name="isPrefix">Decides when the code will run: <c>true</c> if you want the code to run before the original, <c>false</c> if you want it to run after. Typically to guarantee other mod compatibility, you want to prefer running your code after the base game.</param>
+        public CementHook(MethodInfo original, MethodInfo hook, bool isPrefix, MelonMod? callingMod=null) : this()
         {
             this.original = original;
             this.callingMod = callingMod;
@@ -38,7 +45,7 @@ public static class HookModule
     {
         Func<bool> doBeforeHook = () =>
         {
-            // TODO: if mod is disabled, disable hook as well
+            // TODO: if callingMod is disabled or null, disable hook as well
             return true;
         };
 
@@ -47,11 +54,12 @@ public static class HookModule
 
         HarmonyMethod beforeEitherFix = new(doBeforeHook.Method);
 
-        hook.callingMod.HarmonyInstance.Patch(hook.original, prefix, postfix);
+        var harmonyInstance = hook.callingMod is not null ? hook.callingMod.HarmonyInstance : Melon<Mod>.Instance.HarmonyInstance;
+        harmonyInstance.Patch(hook.original, prefix, postfix);
 
         if (canToggle)
-            hook.callingMod.HarmonyInstance.Patch(hook.hook, beforeEitherFix);
+            harmonyInstance.Patch(hook.hook, beforeEitherFix);
 
-        Melon<Mod>.Logger.Msg($"New {(hook.isPrefix ? "PREFIX" : "POSTFIX")} hook on {hook.original.DeclaringType?.Name}.{hook.original.Name} to {hook.hook.DeclaringType?.Name}.{hook.hook.Name}");
+        Melon<Mod>.Logger.Msg($"New {(hook.isPrefix ? "PREFIX" : "POSTFIX")} hook on {hook.original.DeclaringType?.Name}.{hook.original.Name} registered to {hook.hook.DeclaringType?.Name}.{hook.hook.Name} with {typeof(HarmonyLib.Harmony)} instance {harmonyInstance.Id}");
     }
 }
