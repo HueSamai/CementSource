@@ -1,6 +1,6 @@
-[submodule "CementGB.github.io"]
-	path = CementGB.github.io
-	url = https://github.com/CementGB/CementGB.github.io.git
 [submodule "CementUnity"]
-	path = CementUnity
+	path = CSharp/CementUnity
 	url = https://github.com/HueSamai/CementUnity.git
+[submodule "JS/CementGB.github.io"]
+	path = JS/CementGB.github.io
+	url = https://github.com/CementGB/CementGB.github.io.git
