@@ -1,4 +1,4 @@
-/*
+
 using Il2CppInterop.Runtime.Injection;
 using MelonLoader;
 using System;
@@ -27,4 +27,3 @@ public class WaitUntil : CustomYieldInstruction
         }
     }
 }
-*/
