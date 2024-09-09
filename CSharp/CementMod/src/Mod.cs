@@ -57,21 +57,6 @@ public class Mod : MelonMod
     }
     private AssetBundle? _cementAssetBundle;
 
-    internal AssetBundle TestAssetBundle
-    {
-        get
-        {
-            if (_testAssetBundle == null)
-            {
-                _testAssetBundle = AssetBundleUtilities.LoadEmbeddedAssetBundle(MelonAssembly.Assembly, "CementGB.Mod.Assets.testmap.bundle");
-            }
-            return _testAssetBundle;
-        }
-    }
-    private AssetBundle? _testAssetBundle;
-
-    internal string[] TestAssetBundleScenePaths => TestAssetBundle?.GetAllScenePaths();
-
     public override void OnInitializeMelon()
     {
         base.OnInitializeMelon();
@@ -96,7 +81,6 @@ public class Mod : MelonMod
     private static void FileStructure()
     {
         Directory.CreateDirectory(userDataPath);
-        //_melonCat.SetFilePath(Path.Combine(userDataPath, "CementPrefs.cfg"));
     }
 
     private static void CreateCementComponents()
