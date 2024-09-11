@@ -19,6 +19,7 @@ public static class BuildInfo
 public class Mod : MelonMod
 {
     public static readonly string userDataPath = Path.Combine(MelonEnvironment.UserDataDirectory, "CementGB");
+    public static readonly string customContentPath = Path.Combine(userDataPath, "CustomContent");
 
     internal static GameObject CementCompContainer
     {
@@ -69,18 +70,13 @@ public class Mod : MelonMod
         base.OnLateInitializeMelon();
 
         CreateCementComponents();
-    }
-
-    public override void OnSceneWasLoaded(int buildIndex, string sceneName)
-    {
-        base.OnSceneWasLoaded(buildIndex, sceneName);
-
-        LoggerInstance.Msg($"Scene {sceneName} loaded.");
+        AddressableUtilities.LoadCCCatalogs();
     }
 
     private static void FileStructure()
     {
         Directory.CreateDirectory(userDataPath);
+        Directory.CreateDirectory(customContentPath);
     }
 
     private static void CreateCementComponents()
