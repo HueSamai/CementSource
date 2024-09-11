@@ -1,6 +1,7 @@
 ﻿using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
+using NetBeard;
 using System.IO;
 using UnityEngine;
 
@@ -71,6 +72,7 @@ public class Mod : MelonMod
 
         CreateCementComponents();
         AddressableUtilities.LoadCCCatalogs();
+
     }
 
     private static void FileStructure()
@@ -84,5 +86,9 @@ public class Mod : MelonMod
         CementCompContainer = new("CMTSingletons");
         Object.DontDestroyOnLoad(CementCompContainer);
         CementCompContainer.hideFlags = HideFlags.DontUnloadUnusedAsset;
+
+        CementCompContainer.AddComponent<NetBeard.NetBeard>();
+        CementCompContainer.AddComponent<ServerManager>();
+        CementCompContainer.AddComponent<CustomMapManager>();
     }
 }
