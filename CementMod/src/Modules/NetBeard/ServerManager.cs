@@ -26,20 +26,20 @@ namespace NetBeard
             {
                 //NetBeardPlugin.Log.Error("SERVER IS AWDOKJAWDOWAKDPOAWKD");
                 isServer = true;
-/*                UpdateConfigs();*/
+                /*                UpdateConfigs();*/
             }
 
             SceneManager.add_sceneLoaded(new Action<Scene, LoadSceneMode>(WrapperFix));
         }
 
-/*        void UpdateConfigs()
-        {
-            serverConfig = NetConfigLoader.LoadServerConfig();
-            rotationConfig = GBConfigLoader.LoadRotationConfig("allmaps", true);
+        /*        void UpdateConfigs()
+                {
+                    serverConfig = NetConfigLoader.LoadServerConfig();
+                    rotationConfig = GBConfigLoader.LoadRotationConfig("allmaps", true);
 
-            NetworkManager.NetServerConfig = serverConfig;
-            if (rotationConfig != null) GameManagerNew.instance.ChangeRotationConfig(rotationConfig, 0);
-        }*/
+                    NetworkManager.NetServerConfig = serverConfig;
+                    if (rotationConfig != null) GameManagerNew.instance.ChangeRotationConfig(rotationConfig, 0);
+                }*/
 
         void WrapperFix(Scene scene, LoadSceneMode mode)
         {
@@ -57,23 +57,25 @@ namespace NetBeard
                     {
                         UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
                         AudioListener.pause = true;
-                        UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
                         GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false);
+
+
                     }
             }
         }
 
         void OnGUI()
         {
-/*            if (GUILayout.Button("Refresh configs"))
-            {
-                UpdateConfigs();
-            }
+            /*            if (GUILayout.Button("Refresh configs"))
+                        {
+                            UpdateConfigs();
+                        }
 
-            if (GUILayout.Button("Host"))
-            {
-                MonoSingleton<Global>.Instance.UNetManager.LaunchServer(serverConfig);
-            }*/
+                        if (GUILayout.Button("Host"))
+                        {
+                            MonoSingleton<Global>.Instance.UNetManager.LaunchServer(serverConfig);
+                        }
+                        */
         }
     }
 

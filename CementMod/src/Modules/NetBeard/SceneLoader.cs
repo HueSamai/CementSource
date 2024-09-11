@@ -1,3 +1,4 @@
+/* // caused build errors, not sure what to do so im disabling it for now
 using UnityEngine;
 using System;
 using UnityEngine.SceneManagement;
@@ -13,70 +14,86 @@ using System.IO;
 using Il2CppGB.Data;
 using System.Collections.Generic;
 
-namespace NetBeard {
-    /*    [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadString))]
-        public class LoadStringPatch {
-            public static void Postfix(string key, ref string __result) {
-                MelonLogger.Msg(ConsoleColor.White, "LoadString Postfix called");
+namespace NetBeard
+{
+    [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadString))]
+    public class LoadStringPatch
+    {
+        public static void Postfix(string key, ref string __result)
+        {
+            MelonLogger.Msg(ConsoleColor.White, "LoadString Postfix called");
 
-                if (__result == null) { 
-                    if (!ExtendedStringLoader.items.ContainsKey(key)) {
-                        __result = key;
-                        return;
-                    }
-                    __result = ExtendedStringLoader.items[key];
+            if (__result == null)
+            {
+                if (!ExtendedStringLoader.items.ContainsKey(key))
+                {
+                    __result = key;
                     return;
                 }
-
-                if (__result.StartsWith("No translation")) {
-                    if (!ExtendedStringLoader.items.ContainsKey(key)) {
-                        __result = key;
-                        return;
-                    }
-                    __result = ExtendedStringLoader.items[key];
-                    return;
-                }
+                __result = ExtendedStringLoader.items[key];
+                return;
             }
-        }*/
 
-    /*    [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadRawString))]
-        public class LoadRawStringPatch {
-            public static void Postfix(string key, ref string __result) {
-                MelonLogger.Msg(ConsoleColor.White, "LoadRawString Postfix called");
-
-                if (__result == null) { 
-                    if (!ExtendedStringLoader.items.ContainsKey(key)) {
-                        return;
-                    }
-                    __result = ExtendedStringLoader.items[key];
+            if (__result.StartsWith("No translation"))
+            {
+                if (!ExtendedStringLoader.items.ContainsKey(key))
+                {
+                    __result = key;
                     return;
                 }
-
-                if (__result.StartsWith("No translation")) {
-                    if (!ExtendedStringLoader.items.ContainsKey(key)) {
-                        return;
-                    }
-                    __result = ExtendedStringLoader.items[key];
-                    return;
-                }
+                __result = ExtendedStringLoader.items[key];
+                return;
             }
         }
+    }
 
-        [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.TryLoadStringByPlatform))]
-        public class TryLoadStringPatch {
-            public static void Postfix(ref string pulledString, string key, bool __result) {
-                MelonLogger.Msg(ConsoleColor.White, "TryLoadString Postfix called");
+    [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadRawString))]
+    public class LoadRawStringPatch
+    {
+        public static void Postfix(string key, ref string __result)
+        {
+            MelonLogger.Msg(ConsoleColor.White, "LoadRawString Postfix called");
 
-                if (!__result) { 
-                    if (!ExtendedStringLoader.items.ContainsKey(key)) {
-                        return;
-                    }
-                    pulledString = ExtendedStringLoader.items[key];
-                    __result = true;
+            if (__result == null)
+            {
+                if (!ExtendedStringLoader.items.ContainsKey(key))
+                {
+                    return;
                 }
+                __result = ExtendedStringLoader.items[key];
+                return;
             }
-        }*/
 
+            if (__result.StartsWith("No translation"))
+            {
+                if (!ExtendedStringLoader.items.ContainsKey(key))
+                {
+                    return;
+                }
+                __result = ExtendedStringLoader.items[key];
+                return;
+            }
+        }
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.TryLoadStringByPlatform))]
+    public class TryLoadStringPatch
+    {
+        public static void Postfix(ref string pulledString, string key, bool __result)
+        {
+            MelonLogger.Msg(ConsoleColor.White, "TryLoadString Postfix called");
+
+            if (!__result)
+            {
+                if (!ExtendedStringLoader.items.ContainsKey(key))
+                {
+                    return;
+                }
+                pulledString = ExtendedStringLoader.items[key];
+                __result = true;
+            }
+        }
+    }
     public static class ExtendedStringLoader
     {
         public static Dictionary<string, string> items = new();
@@ -165,55 +182,67 @@ namespace NetBeard {
     {
         private List<string> _customMaps = new();
         private bool _injectedCustomMaps = false;
-        public void Awake() {
-            SceneManager.sceneLoaded += (Action<Scene,LoadSceneMode>)OnSceneLoaded;
+        public void Awake()
+        {
+            SceneManager.sceneLoaded += (Action<Scene, LoadSceneMode>)OnSceneLoaded;
             LoadAddressables();
         }
-        
-        public void Update() {
+
+        public void Update()
+        {
             if (!_injectedCustomMaps)
                 InjectCustomMaps();
         }
 
-        public void OnSceneLoaded(Scene scene, LoadSceneMode _) {
+        public void OnSceneLoaded(Scene scene, LoadSceneMode _)
+        {
             _injectedCustomMaps = false;
         }
 
-        public void InjectCustomMaps() {
+        public void InjectCustomMaps()
+        {
             var gamemodesHandler = FindObjectOfType<MenuHandlerGamemodes>();
-            if (gamemodesHandler == null) {
+            if (gamemodesHandler == null)
+            {
                 return;
             }
             MenuHandlerMaps handler = gamemodesHandler.mapSetup;
-            foreach (var map in _customMaps) {
+            foreach (var map in _customMaps)
+            {
                 handler.mapList.Add(map);
             }
             _injectedCustomMaps = true;
         }
 
-        public void LoadAddressables() {
+        public void LoadAddressables()
+        {
             string mapsPath = Path.Combine(Application.dataPath, "Maps");
-            foreach (var dir in Directory.GetDirectories(mapsPath)) {
+            foreach (var dir in Directory.GetDirectories(mapsPath))
+            {
                 string catalogPath = Path.Combine(dir, "catalog.json");
-                if (File.Exists(catalogPath)) {
+                if (File.Exists(catalogPath))
+                {
                     AsyncOperationHandle<IResourceLocator> resourceLocator = Addressables.LoadContentCatalogAsync(catalogPath).Acquire();
                     resourceLocator.WaitForCompletion();
-                    if (resourceLocator.Status == AsyncOperationStatus.Failed) { 
+                    if (resourceLocator.Status == AsyncOperationStatus.Failed)
+                    {
                         MelonLogger.Error("FAILED TO LOAD ADDRESSABLE FOR MAP: " + resourceLocator.OperationException.ToString());
                         continue;
                     }
 
                     string[] parts = dir.Replace("/", "\\").Split("\\");
                     string name = parts[parts.Length - 1];
-                    ExtendedStringLoader.RegisterItem($"STAGE_{name.ToUpper()}", name); 
+                    ExtendedStringLoader.RegisterItem($"STAGE_{name.ToUpper()}", name);
                     _customMaps.Add(name);
 
                     MelonLogger.Msg(ConsoleColor.Green, $"LOADED IN ADDRESSABLE {name}");
                 }
-                else {
+                else
+                {
                     MelonLogger.Error("NO CATALOG FOUND FOR ADDRESSABLE!");
                 }
             }
         }
     }
 }
+*/

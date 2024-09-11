@@ -64,6 +64,7 @@ public class Mod : MelonMod
         base.OnInitializeMelon();
 
         FileStructure();
+        CementPreferences.Initialize();
     }
 
     public override void OnLateInitializeMelon()
