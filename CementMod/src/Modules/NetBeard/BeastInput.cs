@@ -1,15 +1,13 @@
-﻿using Il2Cpp;
-using Il2CppFemur;
-using Il2CppSystem.Threading.Tasks;
+﻿using Il2CppFemur;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Users;
-using UnityEngine;
 
-public class BeastInput
+namespace CementGB.Mod.Modules.NetBeard;
+
+public static class BeastInput
 {
     private static Actor? _cachedKeyboardActor = null;
 
-    public static Actor KeyboardMouseBeast
+    public static Actor? KeyboardMouseBeast
     {
         get
         {
@@ -18,7 +16,6 @@ public class BeastInput
             return _cachedKeyboardActor;
         }
     }
-
 
     private static void GetBeastAssociatedWithKeyboard()
     {
@@ -39,7 +36,7 @@ public class BeastInput
         return actor.InputPlayer.pairedDevices.ToArray();
     }
 
-    public static T GetDeviceFor<T>(Actor actor) where T : InputDevice
+    public static T? GetDeviceFor<T>(Actor actor) where T : InputDevice
     {
         return actor.InputPlayer.pairedDevices[0] as T;
     }

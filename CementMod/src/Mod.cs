@@ -1,7 +1,7 @@
-﻿using CementGB.Mod.Utilities;
+﻿using CementGB.Mod.Modules.NetBeard;
+using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
-using NetBeard;
 using System.IO;
 using UnityEngine;
 
@@ -88,8 +88,7 @@ public class Mod : MelonMod
         Object.DontDestroyOnLoad(CementCompContainer);
         CementCompContainer.hideFlags = HideFlags.DontUnloadUnusedAsset;
 
-        CementCompContainer.AddComponent<NetBeard.NetBeard>();
+        CementCompContainer.AddComponent<NetBeard>();
         CementCompContainer.AddComponent<ServerManager>();
-        CementCompContainer.AddComponent<CustomMapManager>();
     }
 }

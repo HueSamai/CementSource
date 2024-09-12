@@ -5,4 +5,4 @@
 </p>
 
 # NetBeard
-NetBeard is a BepInEx plugin and networking library used for developing multiplayer mods for Gang Beasts.
+NetBeard is a networking module used for developing multiplayer mods for Gang Beasts.
