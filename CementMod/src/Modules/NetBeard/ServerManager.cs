@@ -46,16 +46,17 @@ public class ServerManager : MonoBehaviour
 
     void OnGUI()
     {
-        /*            if (GUILayout.Button("Refresh configs"))
-                    {
-                        UpdateConfigs();
-                    }
+        /*            
+        if (GUILayout.Button("Refresh configs"))
+        {
+            UpdateConfigs();
+        }
 
-                    if (GUILayout.Button("Host"))
-                    {
-                        MonoSingleton<Global>.Instance.UNetManager.LaunchServer(serverConfig);
-                    }
-                    */
+        if (GUILayout.Button("Host"))
+        {
+            MonoSingleton<Global>.Instance.UNetManager.LaunchServer(serverConfig);
+        }
+        */
     }
 }
 

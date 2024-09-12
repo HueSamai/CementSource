@@ -22,17 +22,6 @@ public class LoadStringPatch
             __result = ExtendedStringLoader.items[key];
             return;
         }
-
-        if (__result.StartsWith("No translation"))
-        {
-            if (!ExtendedStringLoader.items.ContainsKey(key))
-            {
-                __result = key;
-                return;
-            }
-            __result = ExtendedStringLoader.items[key];
-            return;
-        }
     }
 }
 
@@ -43,7 +32,7 @@ public class LoadRawStringPatch
     {
         LoggingUtilities.VerboseLog("LoadRawString Postfix called");
 
-        if (__result == null || __result.StartsWith("No translation"))
+        if (__result == null)
         {
             if (!ExtendedStringLoader.items.ContainsKey(key))
             {

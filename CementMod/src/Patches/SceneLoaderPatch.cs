@@ -25,7 +25,7 @@ public static class LoadScenePatch
 
         var assetReference = AddressableUtilities.CreateModdedAssetReference(key);
 
-        Melon<Mod>.Logger.Msg("CUSTOM SCENE GUID: " + assetReference.m_AssetGUID);
+        LoggingUtilities.VerboseLog("CUSTOM SCENE GUID: " + assetReference.m_AssetGUID);
         if (assetReference == null)
         {
             Melon<Mod>.Logger.Error("Asset reference is null! Key probably belongs to an addressable that does not exist or wasn't loaded.");
