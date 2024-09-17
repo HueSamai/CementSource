@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace LogicUI.FancyTextRendering.MarkdownLogic
+﻿namespace LogicUI.FancyTextRendering.MarkdownLogic
 {
     class Bold : SimpleMarkdownTag
     {
@@ -93,7 +91,7 @@ namespace LogicUI.FancyTextRendering.MarkdownLogic
         protected override bool AllowedToProces(MarkdownRenderingSettings settings)
             => settings.Monospace.RenderMonospace;
     }
-    
+
 
     class SuperscriptSingle : MarkdownTag
     {
@@ -111,7 +109,7 @@ namespace LogicUI.FancyTextRendering.MarkdownLogic
         protected override char? IgnoreContents => '^';
         protected override bool TreatLineEndAsCloseTag => true;
     }
-    
+
     class SuperscriptChain : MarkdownTag
     {
         protected override bool AllowedToProces(MarkdownRenderingSettings settings)
