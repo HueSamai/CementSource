@@ -65,6 +65,15 @@ public class Mod : MelonMod
 
         FileStructure();
         CementPreferences.Initialize();
+        CommonHooks.Initialize();
+        AddressableUtilities.LoadCCCatalogs();
+    }
+
+    public override void OnDeinitializeMelon()
+    {
+        base.OnDeinitializeMelon();
+
+        CementPreferences.Deinitialize();
     }
 
     public override void OnLateInitializeMelon()
@@ -72,8 +81,6 @@ public class Mod : MelonMod
         base.OnLateInitializeMelon();
 
         CreateCementComponents();
-        AddressableUtilities.LoadCCCatalogs();
-
     }
 
     private static void FileStructure()
