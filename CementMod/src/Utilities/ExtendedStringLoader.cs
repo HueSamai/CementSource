@@ -1,5 +1,5 @@
-﻿using System.Collections.Generic;
-using MelonLoader;
+﻿using System;
+using System.Collections.Generic;
 
 namespace CementGB.Mod.Utilities;
 
@@ -11,7 +11,7 @@ public static class ExtendedStringLoader
     {
         if (items.ContainsKey(key))
         {
-            Melon<Mod>.Logger.Error($"'{key}' has already been registered in ExtendedStringLoader");
+            LoggingUtilities.VerboseLog(ConsoleColor.DarkRed, $"'{key}' has already been registered in ExtendedStringLoader");
             return;
         }
 
