@@ -16,7 +16,7 @@ public static class LoadScenePatch
 {
     public static bool Prefix(SceneLoader __instance, string key, LoadSceneMode loadMode, bool activateOnLoad, int priority, ref SceneLoadTask __result)
     {
-        if (__instance._sceneList[key] != null)
+        if (__instance._sceneList[key] != null || !AddressableUtilities.IsModdedKey(key))
         {
             return true; // Scene is vanilla, just do normal behavior
         }
@@ -32,6 +32,7 @@ public static class LoadScenePatch
             __result = null;
             return false;
         }
+
         if (!assetReference.RuntimeKeyIsValid())
         {
             Melon<Mod>.Logger.Error("[SCENELOAD] LoadScene: Failed validation | Key: {0} | Ref: {1}", new object[]
@@ -42,11 +43,12 @@ public static class LoadScenePatch
             __result = null;
             return false;
         }
+
         __instance._currentKey = key;
         __instance._currentScene = key;
         SceneLoadTask sceneLoadTask = new((SceneLoadTask.OnLoaded)__instance.OnSceneLoaded, loadMode, activateOnLoad, priority);
-        Melon<Mod>.Logger.Msg($"[SCENELOAD] LoadScene: Start loading | Key: {__instance._currentKey}");
 
+        Melon<Mod>.Logger.Msg($"[SCENELOAD] LoadScene: Start loading | Key: {__instance._currentKey}");
         sceneLoadTask._sceneDataRef = assetReference;
         var sceneData = Addressables.LoadAssetAsync<SceneData>(key + "-Data").Acquire();
         sceneData.WaitForCompletion();
@@ -59,9 +61,9 @@ public static class LoadScenePatch
         {
             sceneLoadTask._status = AsyncOperationStatus.Succeeded;
         }
+
         __instance.OnSceneLoaded(sceneLoadTask);
         sceneLoadTask._dataLoading = null;
-
         Global.Instance.LevelLoadSystem.LoadingScreen.LoadTasks.Add(new ICompleteTracker(sceneLoadTask.Pointer));
 
         __result = sceneLoadTask;
