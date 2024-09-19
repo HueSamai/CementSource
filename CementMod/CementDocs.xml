@@ -68,9 +68,10 @@
         </member>
         <member name="M:CementGB.Mod.Modules.HookModule.CreateHook(CementGB.Mod.Modules.HookModule.CementHook,System.Boolean)">
             <summary>
-            Create a hook (before or after depending on CementHook's <c>isPrefix</c> boolean) on a method that will toggle on and off with the passed MelonMod.
+            Create a hook (before or after depending on CementHook's <c>isPrefix</c> boolean) on a method that will toggle on and off with the passed MelonMod (WIP).
             </summary>
             <param name="hook">The <see cref="T:CementGB.Mod.Modules.HookModule.CementHook"/> info to patch with.</param>
+            <param name="canToggle">Whether the hook can be toggled on/off or not. Currently not functional.</param>
         </member>
         <member name="T:CementGB.Mod.CementPreferences">
             <summary>
