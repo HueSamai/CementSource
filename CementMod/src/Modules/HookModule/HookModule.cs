@@ -28,7 +28,7 @@ public static class HookModule
         /// <param name="callingMod">The mod making this patch. Used to toggle the patch on/off with the mod.</param>
         /// <param name="hook">The method containing the code to insert before or after the <paramref name="original"/> method.</param>
         /// <param name="isPrefix">Decides when the code will run: <c>true</c> if you want the code to run before the original, <c>false</c> if you want it to run after. Typically to guarantee other mod compatibility, you want to prefer running your code after the base game.</param>
-        public CementHook(MethodInfo original, MethodInfo hook, bool isPrefix, MelonMod? callingMod=null) : this()
+        public CementHook(MethodInfo original, MethodInfo hook, bool isPrefix, MelonMod? callingMod = null) : this()
         {
             this.original = original;
             this.callingMod = callingMod;
@@ -38,9 +38,10 @@ public static class HookModule
     }
 
     /// <summary>
-    /// Create a hook (before or after depending on CementHook's <c>isPrefix</c> boolean) on a method that will toggle on and off with the passed MelonMod.
+    /// Create a hook (before or after depending on CementHook's <c>isPrefix</c> boolean) on a method that will toggle on and off with the passed MelonMod (WIP).
     /// </summary>
     /// <param name="hook">The <see cref="CementHook"/> info to patch with.</param>
+    /// <param name="canToggle">Whether the hook can be toggled on/off or not. Currently not functional.</param>
     public static void CreateHook(CementHook hook, bool canToggle = true)
     {
         Func<bool> doBeforeHook = () =>

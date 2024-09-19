@@ -79,7 +79,14 @@ public static class AddressableUtilities
 
         foreach (var dir in Directory.GetDirectories(Mod.customContentPath))
         {
-            var catalogPath = Path.Combine(dir, "catalog.json");
+            var aaPath = Path.Combine(dir, "aa");
+            if (!Directory.Exists(aaPath))
+            {
+                LoggingUtilities.Logger.Warning($"Directory {dir} has no \"aa\" folder! Addressables will not be loaded.");
+                continue;
+            }
+
+            var catalogPath = Path.Combine(aaPath, "catalog.json");
             if (File.Exists(catalogPath))
             {
                 var resourceLocatorHandle = Addressables.LoadContentCatalogAsync(catalogPath).Acquire();

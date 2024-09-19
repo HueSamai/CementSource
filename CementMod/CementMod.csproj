@@ -23,6 +23,7 @@
 
     <OutputPath>bin\Debug\</OutputPath>
     <WarningLevel>4</WarningLevel>
+    <DocumentationFile>CementDocs.xml</DocumentationFile>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
