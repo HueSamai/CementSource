@@ -12,9 +12,9 @@ namespace CementGB.Mod.Patches;
 #nullable disable
 
 [HarmonyLib.HarmonyPatch(typeof(SceneLoader), nameof(SceneLoader.LoadScene))]
-public static class LoadScenePatch
+internal static class LoadScenePatch
 {
-    public static bool Prefix(SceneLoader __instance, string key, LoadSceneMode loadMode, bool activateOnLoad, int priority, ref SceneLoadTask __result)
+    private static bool Prefix(SceneLoader __instance, string key, LoadSceneMode loadMode, bool activateOnLoad, int priority, ref SceneLoadTask __result)
     {
         if (__instance._sceneList[key] != null || !AddressableUtilities.IsModdedKey(key))
         {

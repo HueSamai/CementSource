@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace CementGB.Mod.Patches;
 
-public static class DisplayCreditsPatch
+internal static class DisplayCreditsPatch
 {
     [HarmonyPatch(typeof(DisplayCredits), nameof(DisplayCredits.ApplyText))]
     private static class ApplyText

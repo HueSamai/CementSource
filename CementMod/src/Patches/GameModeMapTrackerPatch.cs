@@ -7,7 +7,7 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 
 namespace CementGB.Mod.Patches;
 
-public static class GameModeMapTrackerPatch
+internal static class GameModeMapTrackerPatch
 {
     private static List<GameModeMapTracker> _instancesAlreadyExecuted = new();
 
