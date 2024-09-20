@@ -10,6 +10,7 @@
     <Nullable>enable</Nullable>
     <OutputType>Library</OutputType>
     <DefineConstants>$(DefineConstants);MELONLOADER</DefineConstants>
+    <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
