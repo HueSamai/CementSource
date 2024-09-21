@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Modules.NetBeard;
+using CementGB.Mod.src.Utilities;
 using CementGB.Mod.Utilities;
 using Il2CppInterop.Runtime.Injection;
 using Il2CppTMPro;
@@ -13,6 +14,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Localization.Components;
+using UnityEngine.UI;
 
 namespace CementGB.Mod.src.Modules.ConfigModuie;
 
@@ -64,7 +66,10 @@ public class ConfigModule : MonoBehaviour
         GameObject audioButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Audio");
         GameObject configButton = Instantiate(audioButton, audioButton.transform.parent, true);
         configButton.name = "Mod Configurations";
+        configButton.transform.SetSiblingIndex(audioButton.transform.GetSiblingIndex());
         configButton.transform.localPosition += Vector3.up * 65.0148f;
+
+        audioButton.GetComponent<Button>().ReconstructByChildren();
 
         Destroy(configButton.GetComponent<LocalizeStringEvent>());
         configButton.GetComponent<TextMeshProUGUI>().text = "Mod Configurations";
