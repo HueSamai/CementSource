@@ -71,6 +71,7 @@ public class ConfigModule : MonoBehaviour
 
         audioButton.GetComponent<Button>().ReconstructNavigationByChildren();
         configButton.GetComponent<Button>().ReconstructNavigationByChildren();
+        GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Reset").GetComponent<Button>().ReconstructNavigationByChildren();
 
         Destroy(configButton.GetComponent<LocalizeStringEvent>());
         configButton.GetComponent<TextMeshProUGUI>().text = "Mod Configurations";
