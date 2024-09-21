@@ -69,7 +69,8 @@ public class ConfigModule : MonoBehaviour
         configButton.transform.SetSiblingIndex(audioButton.transform.GetSiblingIndex());
         configButton.transform.localPosition += Vector3.up * 65.0148f;
 
-        audioButton.GetComponent<Button>().ReconstructByChildren();
+        audioButton.GetComponent<Button>().ReconstructNavigationByChildren();
+        configButton.GetComponent<Button>().ReconstructNavigationByChildren();
 
         Destroy(configButton.GetComponent<LocalizeStringEvent>());
         configButton.GetComponent<TextMeshProUGUI>().text = "Mod Configurations";
