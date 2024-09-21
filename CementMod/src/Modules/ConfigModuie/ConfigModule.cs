@@ -1,24 +1,21 @@
-﻿using CementGB.Mod.Modules.NetBeard;
-using CementGB.Mod.src.Utilities;
-using CementGB.Mod.Utilities;
-using Il2CppInterop.Runtime.Injection;
+﻿using CementGB.Mod.src.Utilities;
+using Il2CppGB.Platform.Utils;
+using Il2CppGB.UI.Menu;
+using Il2CppGB.UI.Utils.Settings;
 using Il2CppTMPro;
 using MelonLoader;
 using MelonLoader.Utils;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Localization.Components;
+using UnityEngine.Localization.PropertyVariants;
 using UnityEngine.UI;
 
 namespace CementGB.Mod.src.Modules.ConfigModuie;
 
-[MelonLoader.RegisterTypeInIl2Cpp]
+[RegisterTypeInIl2Cpp]
 public class ConfigModule : MonoBehaviour
 {
     public static ConfigModule Instance
@@ -64,19 +61,67 @@ public class ConfigModule : MonoBehaviour
     internal void ConstructConfigButton()
     {
         GameObject audioButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Audio");
-        GameObject configButton = Instantiate(audioButton, audioButton.transform.parent, true);
-        configButton.name = "Mod Configurations";
-        configButton.transform.SetSiblingIndex(audioButton.transform.GetSiblingIndex());
-        configButton.transform.localPosition += Vector3.up * 65.0148f;
+        GameObject graphicsButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Graphics");
+        GameObject inputButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Input");
+        GameObject configObject = Instantiate(audioButton, audioButton.transform.parent, true);
 
-        audioButton.GetComponent<Button>().ReconstructNavigationByChildren();
-        configButton.GetComponent<Button>().ReconstructNavigationByChildren();
-        GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Reset").GetComponent<Button>().ReconstructNavigationByChildren();
+        for (int i = 2; i < audioButton.transform.parent.childCount - 1; i++)
+        {
+            audioButton.transform.parent.GetChild(i).localPosition -= Vector3.up * 65.0148f;
+        }
 
-        Destroy(configButton.GetComponent<LocalizeStringEvent>());
-        configButton.GetComponent<TextMeshProUGUI>().text = "Mod Configurations";
+        configObject.name = "Mod Configs";
+        configObject.transform.SetSiblingIndex(inputButton.transform.GetSiblingIndex());
+        configObject.transform.localPosition -= Vector3.up * 65.0148f * 2f;
+
+        graphicsButton.GetComponent<Button>().ReconstructNavigationByChildren();
+        inputButton.GetComponent<Button>().ReconstructNavigationByChildren();
+        configObject.GetComponent<Button>().ReconstructNavigationByChildren();
+
+        Destroy(configObject.GetComponent<LocalizeStringEvent>());
+        configObject.GetComponent<TextMeshProUGUI>().text = configObject.name;
+
+        Button configButton = configObject.GetComponent<Button>();
+        configButton.onClick.m_PersistentCalls.Clear();
+
+        BaseMenuScreen configMenu = ConstructConfigMenu();
+
+        configButton.onClick.AddListener(new Action(() =>
+        {
+            GameObject.Find("Managers/Menu").GetComponent<MenuController>().PushScreen(configMenu);
+        }));
     }
-    
+
+    internal BaseMenuScreen ConstructConfigMenu()
+    {
+        GameObject inputRoot = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Input Root");
+        GameObject configMenu = Instantiate(inputRoot, inputRoot.transform.parent, true);
+        Button emptyButton = configMenu.transform.FindChild("Reset All").GetComponent<Button>();
+
+        for (int i = 0; i < configMenu.transform.childCount; i++)
+            if (configMenu.transform.GetChild(i).name != "Reset All") Destroy(configMenu.transform.GetChild(i).gameObject);
+
+        Destroy(emptyButton.GetComponent<DisabledIfPlatform>());
+        Destroy(emptyButton.GetComponent<LocalizeStringEvent>());
+        Destroy(emptyButton.GetComponent<GameObjectLocalizer>());
+
+        emptyButton.name = "Empty Button";
+        emptyButton.GetComponent<TextMeshProUGUI>().text = emptyButton.name;
+        emptyButton.onClick.RemoveAllListeners();
+
+        Destroy(configMenu.GetComponent<InputOptions>());
+
+        BaseMenuScreen menuScreen = configMenu.GetComponent<BaseMenuScreen>();
+        menuScreen.defaultSelection = emptyButton;
+        menuScreen.defaultSelectionFallback = emptyButton;
+        menuScreen.cancelEvent.AddListener(new Action(() =>
+        {
+            GameObject.Find("Managers/Menu").GetComponent<MenuController>().PopScreen();
+        }));
+
+        return menuScreen;
+    }
+
     internal void OnGUI()
     {
         if (GUILayout.Button("Construct config button"))

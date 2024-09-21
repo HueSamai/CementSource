@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2CppGB.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +12,13 @@ namespace CementGB.Mod.src.Utilities;
 
 public static class Extensions
 {
-    public static void ReconstructNavigation(this Button toChange, Button up, Button down)
+    /// <summary>
+    /// Somebody write a summary for this I'm dying inside tee hee
+    /// </summary>
+    /// <param name="toChange"></param>
+    /// <param name="up"></param>
+    /// <param name="down"></param>
+    public static void ReconstructNavigation(this Button toChange, Button? up, Button? down)
     {
         Navigation nav = new Navigation();
         nav.selectOnLeft = toChange.navigation.selectOnLeft;
@@ -28,7 +35,7 @@ public static class Extensions
     /// <param name="toChange"></param>
     public static void ReconstructNavigationByChildren(this Button toChange)
     {
-        Button[] buttons = toChange.transform.parent.GetComponentsInChildren<Button>();
+        Selectable[] buttons = toChange.transform.parent.GetComponentsInChildren<Selectable>();
 
         Navigation nav = new Navigation();
         int sIndex = -1;
