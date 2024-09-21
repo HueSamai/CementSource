@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Modules.NetBeard;
+using CementGB.Mod.src.Modules.ConfigModuie;
 using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
@@ -50,25 +51,6 @@ public class Mod : MelonMod
     }
     private static GameObject? _cementCompContainer;
 
-    internal AssetBundle CementAssetBundle
-    {
-        get
-        {
-            if (_cementAssetBundle == null)
-            {
-                _cementAssetBundle = AssetBundleUtilities.LoadEmbeddedAssetBundle(MelonAssembly.Assembly, "CementGB.Mod.Assets.cement.bundle");
-            }
-            return _cementAssetBundle;
-        }
-        set
-        {
-            if (_cementAssetBundle != value)
-                Object.Destroy(_cementAssetBundle);
-            _cementAssetBundle = value;
-        }
-    }
-    private AssetBundle? _cementAssetBundle;
-
     /// <summary>
     /// Fires when Cement loads. Since Cement's MelonPriority is set to a very low number, the mod should initialize before any other.
     /// </summary>
@@ -117,5 +99,6 @@ public class Mod : MelonMod
 
         CementCompContainer.AddComponent<NetBeard>();
         CementCompContainer.AddComponent<ServerManager>();
+        CementCompContainer.AddComponent<ConfigModule>();
     }
 }

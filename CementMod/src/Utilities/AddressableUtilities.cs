@@ -65,7 +65,7 @@ public static class AddressableUtilities
         return ret.ToArray();
     }
 
-    public static bool IsModdedKey(string key) => _moddedResourceLocators.Any((resL) => resL.Locate(key, Il2CppType.Of<UnityEngine.Object>(), null));
+    public static bool IsModdedKey(string key) => _moddedResourceLocators.Any((resL) => resL.Locate(key, Il2CppType.Of<UnityEngine.Object>(), out _));
 
     public static ReadOnlyDictionary<string, Il2CppSystem.Collections.Generic.List<Il2CppSystem.Object>> PackAddressableKeys => new(_packAddressableKeys);
     private static readonly Dictionary<string, Il2CppSystem.Collections.Generic.List<Il2CppSystem.Object>> _packAddressableKeys = new();
