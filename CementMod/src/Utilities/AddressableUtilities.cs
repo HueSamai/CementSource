@@ -1,11 +1,11 @@
+using Il2CppInterop.Runtime;
+using Il2CppSystem.Linq;
+using MelonLoader;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
-using Il2CppInterop.Runtime;
-using Il2CppSystem.Linq;
-using MelonLoader;
 using UnityEngine.AddressableAssets;
 using UnityEngine.AddressableAssets.ResourceLocators;
 using UnityEngine.ResourceManagement.AsyncOperations;
@@ -65,11 +65,12 @@ public static class AddressableUtilities
         return ret.ToArray();
     }
 
-    public static bool IsModdedKey(string key) => _moddedResourceLocators.Any((resL) => resL.Locate(key, Il2CppType.Of<UnityEngine.Object>(), out _));
+    public static bool IsModdedKey(string key) => ModdedResourceLocators.Any(locator => locator.Keys.Contains(key));
 
     public static ReadOnlyDictionary<string, Il2CppSystem.Collections.Generic.List<Il2CppSystem.Object>> PackAddressableKeys => new(_packAddressableKeys);
     private static readonly Dictionary<string, Il2CppSystem.Collections.Generic.List<Il2CppSystem.Object>> _packAddressableKeys = new();
 
+    public static ReadOnlyCollection<IResourceLocator> ModdedResourceLocators => _moddedResourceLocators.AsReadOnly();
     private static readonly List<IResourceLocator> _moddedResourceLocators = new();
 
     internal static void LoadCCCatalogs()
