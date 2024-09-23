@@ -17,8 +17,8 @@ public class ServerManager : MonoBehaviour
     public static bool DontAutoStart => Environment.GetCommandLineArgs().Contains("--DONT-AUTOSTART");
     public static bool IsDedicated => Environment.GetCommandLineArgs().Contains("--DEDICATED-SERVER");
     //public static bool IsP2P => Environment.GetCommandLineArgs().Contains("--P2P-SERVER"); // TODO: Implement a P2P solution for servers.
-    public static string IP => CommandLineParser.Instance.GetValueForKey("--DDC_IP", true);
-    public static string Port => CommandLineParser.Instance.GetValueForKey("--DDC_PORT", true);
+    public static string IP => CommandLineParser.Instance.GetValueForKey("-DDC_IP", true);
+    public static string Port => CommandLineParser.Instance.GetValueForKey("-DDC_PORT", true);
 
     private void Awake()
     {
@@ -42,7 +42,7 @@ public class ServerManager : MonoBehaviour
         {
             Melon<Mod>.Logger.Msg("Setting up dedicated server overrides and initializers. . .");
             UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer | UnityServicesManager.InitialiseFlags.GameClient, null, "", "DGS");
-            GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false);
+            GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false); // Disabling the level load screen because it indefinitely pops up on hosted servers
             Melon<Mod>.Logger.Msg(ConsoleColor.Green, "Done!");
 
             Melon<Mod>.Logger.Msg("Subscribing to server events. . .");
@@ -80,5 +80,23 @@ public class ServerManager : MonoBehaviour
     private static void OnClientStopped()
     {
         // TODO: display log messages detailing the client that left/stopped
+    }
+
+    [HarmonyLib.HarmonyPatch(typeof(DevelopmentTestServer), nameof(DevelopmentTestServer.SetupLocalServer))]
+    public static class CLAFix
+    {
+        public static void Postfix(DevelopmentTestServer __instance, RotationConfig gameConfig, ServerConfig serverConfig)
+        {
+            string valueForKey = CommandLineParser.Instance.GetValueForKey("-DDC_IP", true);
+            string valueForKey2 = CommandLineParser.Instance.GetValueForKey("-DDC_PORT", true);
+            if (!string.IsNullOrEmpty(valueForKey2))
+            {
+                DevelopmentTestServer.DirectConnectPort = int.Parse(valueForKey2);
+            }
+            if (!string.IsNullOrEmpty(valueForKey))
+            {
+                DevelopmentTestServer.DirectConnectIP = valueForKey;
+            }
+        }
     }
 }
