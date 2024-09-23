@@ -2,6 +2,7 @@
 using Il2CppCoatsink.UnityServices;
 using Il2CppCoreNet.Config;
 using Il2CppGB.Config;
+using Il2CppGB.Core.Bootstrappers;
 using Il2CppGB.UnityServices.Matchmaking;
 using System;
 using System.Linq;
@@ -38,8 +39,11 @@ internal class ServerManager : MonoBehaviour
             // initialize integral coatsink wrappers
             if (isServer)
             {
+                NetworkBootstrapper.IsDedicatedServer = true;
+                FindObjectOfType<NetworkBootstrapper>().AutoRunServer = true;
+
                 UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
-                AudioListener.pause = true;
+                // AudioListener.pause = true;
                 GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false);
             }
         }
