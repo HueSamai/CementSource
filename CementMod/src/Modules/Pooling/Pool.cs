@@ -10,13 +10,13 @@ namespace CementGB.Mod.Modules.PoolingModule;
 public class Pool : MonoBehaviour
 {
     // Dictionary that gets a prefab from a given id
-    private static readonly Dictionary<int, GameObject> idToObject = new Dictionary<int, GameObject>();
+    private static readonly Dictionary<int, GameObject> idToObject = new();
 
     // Dictionary that gets a id from a given prefab
-    private static readonly Dictionary<GameObject, int> objectToId = new Dictionary<GameObject, int>();
+    private static readonly Dictionary<GameObject, int> objectToId = new();
 
-    private static readonly List<GameObject> spawnedObjects = new List<GameObject>();
-    private static readonly List<GameObject> pooledObjects = new List<GameObject>();
+    private static readonly List<GameObject> spawnedObjects = new();
+    private static readonly List<GameObject> pooledObjects = new();
 
     // Dictionary that corresponds ids to actions
     private static readonly Dictionary<int, Action<GameObject>?> resetActions = new();
