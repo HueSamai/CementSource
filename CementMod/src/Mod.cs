@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Modules.NetBeard;
+using CementGB.Mod.Modules.PoolingModule;
 using CementGB.Mod.Utilities;
 using MelonLoader;
 using MelonLoader.Utils;
@@ -90,5 +91,6 @@ public class Mod : MelonMod
 
         CementCompContainer.AddComponent<NetBeard>();
         CementCompContainer.AddComponent<ServerManager>();
+        CementCompContainer.AddComponent<Pool>();
     }
 }
