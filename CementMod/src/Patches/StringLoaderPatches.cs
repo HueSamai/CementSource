@@ -1,14 +1,13 @@
 ﻿using CementGB.Mod.Utilities;
 using Il2CppGB.Data;
-using System;
 
 namespace CementGB.Mod.Patches;
 
 
 [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadString))]
-public class LoadStringPatch
+internal class LoadStringPatch
 {
-    public static void Postfix(string key, ref string __result)
+    private static void Postfix(string key, ref string __result)
     {
         LoggingUtilities.VerboseLog("LoadString Postfix called");
 
@@ -26,9 +25,9 @@ public class LoadStringPatch
 }
 
 [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadRawString))]
-public class LoadRawStringPatch
+internal class LoadRawStringPatch
 {
-    public static void Postfix(string key, ref string __result)
+    private static void Postfix(string key, ref string __result)
     {
         LoggingUtilities.VerboseLog("LoadRawString Postfix called");
 
@@ -45,9 +44,9 @@ public class LoadRawStringPatch
 }
 
 [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.TryLoadStringByPlatform))]
-public class TryLoadStringPatch
+internal class TryLoadStringPatch
 {
-    public static void Postfix(ref string pulledString, string key, ref bool __result)
+    private static void Postfix(ref string pulledString, string key, ref bool __result)
     {
         LoggingUtilities.VerboseLog("TryLoadString Postfix called");
 

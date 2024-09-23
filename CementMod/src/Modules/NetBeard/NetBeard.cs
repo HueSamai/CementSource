@@ -159,64 +159,68 @@ public class NetBeard : MonoBehaviour
 
     public static void InitFromServerHandlers()
     {
-        // TODO: This does not work for every assembly registered. Use MelonAssembly.LoadedAssemblies for that
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        foreach (Type type in assembly.GetTypes())
+        foreach (var melon in MelonAssembly.LoadedAssemblies)
         {
-            foreach (MethodInfo method in type.GetMethods())
+            var assembly = melon.Assembly;
+            foreach (Type type in assembly.GetTypes())
             {
-                HandleMessageFromServer? attribute = (HandleMessageFromServer?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromServer));
-                if (attribute != null)
+                foreach (MethodInfo method in type.GetMethods())
                 {
-                    if (IsValidMethod(method))
+                    HandleMessageFromServer? attribute = (HandleMessageFromServer?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromServer));
+                    if (attribute != null)
                     {
-                        ushort code = (ushort)(attribute.msgCode + clientModOffsets[attribute.modId]);
-                        fromServerHandlers.Add(code);
-                        NetworkManager.singleton.client.RegisterHandler((short)code, (NetworkMessageDelegate)delegate (NetworkMessage message)
+                        if (IsValidMethod(method))
                         {
-                            method.Invoke(null, new object[] { message });
-                        });
-                        LoggingUtilities.VerboseLog($"Registered handler for '{method.Name}'");
-                    }
-                    else
-                    {
-                        LoggingUtilities.VerboseLog($"Invalid message handler '{method.Name}'. Message handlers should only take in one argument of type 'NetworkMessage'");
+                            ushort code = (ushort)(attribute.msgCode + clientModOffsets[attribute.modId]);
+                            fromServerHandlers.Add(code);
+                            NetworkManager.singleton.client.RegisterHandler((short)code, (NetworkMessageDelegate)delegate (NetworkMessage message)
+                            {
+                                method.Invoke(null, new object[] { message });
+                            });
+                            LoggingUtilities.VerboseLog($"Registered handler for '{method.Name}'");
+                        }
+                        else
+                        {
+                            LoggingUtilities.VerboseLog($"Invalid message handler '{method.Name}'. Message handlers should only take in one argument of type 'NetworkMessage'");
+                        }
                     }
                 }
             }
+            LoggingUtilities.VerboseLog("Initialised from server handlers!");
         }
-        LoggingUtilities.VerboseLog("Initialised from server handlers!");
     }
 
     public static void InitFromClientHandlers()
     {
-        // TODO: This does not work for every assembly registered. Use MelonAssembly.LoadedAssemblies for that
-        Assembly assembly = Assembly.GetExecutingAssembly();
-        foreach (Type type in assembly.GetTypes())
+        foreach (var melon in MelonAssembly.LoadedAssemblies)
         {
-            foreach (MethodInfo method in type.GetMethods())
+            var assembly = melon.Assembly;
+            foreach (Type type in assembly.GetTypes())
             {
-                HandleMessageFromClient? attribute = (HandleMessageFromClient?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromClient));
-                if (attribute != null)
+                foreach (MethodInfo method in type.GetMethods())
                 {
-                    if (IsValidMethod(method))
+                    HandleMessageFromClient? attribute = (HandleMessageFromClient?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromClient));
+                    if (attribute != null)
                     {
-                        ushort code = (ushort)(attribute.msgCode + serverModOffsets[attribute.modId]);
-                        fromClientHandlers.Add(code);
-                        NetworkServer.RegisterHandler((short)code, (NetworkMessageDelegate)delegate (NetworkMessage message)
+                        if (IsValidMethod(method))
                         {
-                            method.Invoke(null, new object[] { message });
-                        });
-                        LoggingUtilities.VerboseLog($"Registered handler for '{method.Name}'");
-                    }
-                    else
-                    {
-                        LoggingUtilities.VerboseLog($"Invalid message handler '{method.Name}'. Message handlers should only take in one argument of type 'NetworkMessage'");
+                            ushort code = (ushort)(attribute.msgCode + serverModOffsets[attribute.modId]);
+                            fromClientHandlers.Add(code);
+                            NetworkServer.RegisterHandler((short)code, (NetworkMessageDelegate)delegate (NetworkMessage message)
+                            {
+                                method.Invoke(null, new object[] { message });
+                            });
+                            LoggingUtilities.VerboseLog($"Registered handler for '{method.Name}'");
+                        }
+                        else
+                        {
+                            LoggingUtilities.VerboseLog($"Invalid message handler '{method.Name}'. Message handlers should only take in one argument of type 'NetworkMessage'");
+                        }
                     }
                 }
             }
+            LoggingUtilities.VerboseLog("Initialised from client handlers!");
         }
-        LoggingUtilities.VerboseLog("Initialised from client handlers!");
     }
 
     public static void SendToServer(string modId, ushort msgCode, MessageBase message)
