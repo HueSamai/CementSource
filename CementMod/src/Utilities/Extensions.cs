@@ -1,14 +1,6 @@
-﻿using CementGB.Mod.Utilities;
-using Il2CppGB.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.Rendering.Universal;
-using UnityEngine.UI;
+﻿using UnityEngine.UI;
 
-namespace CementGB.Mod.src.Utilities;
+namespace CementGB.Mod.Utilities;
 
 public static class Extensions
 {
@@ -20,11 +12,13 @@ public static class Extensions
     /// <param name="down"></param>
     public static void ReconstructNavigation(this Button toChange, Button? up, Button? down)
     {
-        Navigation nav = new Navigation();
-        nav.selectOnLeft = toChange.navigation.selectOnLeft;
-        nav.selectOnRight = toChange.navigation.selectOnRight;
-        nav.selectOnUp = up == null ? toChange.navigation.selectOnUp : up;
-        nav.selectOnDown = down == null ? toChange.navigation.selectOnDown : down;
+        Navigation nav = new()
+        {
+            selectOnLeft = toChange.navigation.selectOnLeft,
+            selectOnRight = toChange.navigation.selectOnRight,
+            selectOnUp = up ?? toChange.navigation.selectOnUp,
+            selectOnDown = down ?? toChange.navigation.selectOnDown
+        };
 
         toChange.navigation = nav;
     }
@@ -37,7 +31,7 @@ public static class Extensions
     {
         Selectable[] buttons = toChange.transform.parent.GetComponentsInChildren<Selectable>();
 
-        Navigation nav = new Navigation();
+        Navigation nav = new();
         int sIndex = -1;
 
         // Stupid fucking fucker button wouldn't work with Array.IndexOf so I had to do a for loop and that saddens me
