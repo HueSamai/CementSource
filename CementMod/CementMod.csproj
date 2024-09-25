@@ -85,5 +85,6 @@
 
     <!-- Copy the built mod dll into game Mods folder -->
     <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GameDir)\Mods" />
+	<Copy SourceFiles="$(TargetPath)" DestinationFolder="D:\SteamLibrary\steamapps\common\GB Server New\Mods" />
   </Target>
 </Project>

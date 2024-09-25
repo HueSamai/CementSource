@@ -13,16 +13,22 @@ namespace CementGB.Mod.Modules.PoolingModule;
 /// </summary>
 public class Pool : MonoBehaviour
 {
-    // Dictionary that gets a prefab from a given id
+    /// <summary>
+    /// Dictionary that gets a prefab from a given id
+    /// </summary>
     private static readonly Dictionary<int, GameObject> idToObject = new();
 
-    // Dictionary that gets a id from a given prefab
+    /// <summary>
+    /// Dictionary that gets a id from a given prefab
+    /// </summary>
     private static readonly Dictionary<GameObject, int> objectToId = new();
 
     private static readonly List<GameObject> spawnedObjects = new();
     private static readonly List<GameObject> pooledObjects = new();
-
-    // Dictionary that corresponds ids to actions
+    
+    /// <summary>
+    /// Dictionary that corresponds ids to actions
+    /// </summary>
     private static readonly Dictionary<int, Action<GameObject>?> resetActions = new();
 
     private void Awake()
@@ -36,13 +42,17 @@ public class Pool : MonoBehaviour
         pooledObjects.Clear();
     }
 
-    // Registers a prefab and reset action which allows users to instantiate objects with the pooling system.
+    /// <summary>
+    /// Registers a prefab and reset action which allows users to instantiate objects with the pooling system.
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <param name="reset"></param>
     private static void BaseRegisterPrefab(GameObject prefab, Action<GameObject>? reset)
     {
         // Checks if the prefab has already been registered
         if (objectToId.ContainsKey(prefab))
         {
-            Melon<CementGB.Mod.Mod>.Logger.Error("You are trying to register a prefab, that has already been registered.");
+            Melon<Mod>.Logger.Error("You are trying to register a prefab, that has already been registered.");
             return;
         }
 
@@ -56,19 +66,29 @@ public class Pool : MonoBehaviour
         objectToId[prefab] = nextId;
     }
 
-    // Overload for RegisterPrefab
+    /// <summary>
+    /// Overload for RegisterPrefab
+    /// </summary>
+    /// <param name="prefab"></param>
     public static void RegisterPrefab(GameObject prefab)
     {
         BaseRegisterPrefab(prefab, null);
     }
 
-    // Overload for RegisterPrefab
+    /// <summary>
+    /// Overload for RegisterPrefab
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <param name="reset"></param>
     public static void RegisterPrefab(GameObject prefab, Action<GameObject> reset)
     {
         BaseRegisterPrefab(prefab, reset);
     }
 
-    // Pools an object so that it can be instantiated later
+    /// <summary>
+    /// Pools an object so that it can be instantiated later
+    /// </summary>
+    /// <param name="gameObject"></param>
     public static void PoolObject(GameObject gameObject)
     {
         // Checks if the object was spawned with the pooling system
@@ -86,7 +106,11 @@ public class Pool : MonoBehaviour
         pooledObjects.Add(gameObject);
     }
 
-    // Instantiates a new object or finds another object with the same id. Base for all instantiate overloads.
+    /// <summary>
+    /// Instantiates a new object or finds another object with the same id. Base for all instantiate overloads.
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <returns></returns>
     private static GameObject? BaseInstantiate(GameObject prefab)
     {
         // Checks if the prefab has been registered
@@ -129,7 +153,11 @@ public class Pool : MonoBehaviour
     }
 
 
-    // Overload for instantiate
+    /// <summary>
+    /// Overload for instantiate
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <returns></returns>
     public static GameObject? Instantiate(GameObject prefab)
     {
         GameObject? @object = BaseInstantiate(prefab);
@@ -143,7 +171,12 @@ public class Pool : MonoBehaviour
         return @object;
     }
 
-    // Overload for instantiate
+    /// <summary>
+    /// Overload for instantiate
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <param name="parent"></param>
+    /// <returns></returns>
     public static GameObject? Instantiate(GameObject prefab, Transform parent)
     {
         GameObject? @object = BaseInstantiate(prefab);
@@ -158,7 +191,12 @@ public class Pool : MonoBehaviour
     }
 
 
-    // Overload for instantiate
+    /// <summary>
+    /// Overload for instantiate
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <param name="position"></param>
+    /// <returns></returns>
     public static GameObject? Instantiate(GameObject prefab, Vector3 position)
     {
         GameObject? @object = BaseInstantiate(prefab);
@@ -173,7 +211,13 @@ public class Pool : MonoBehaviour
     }
 
 
-    // Overload for instantiate
+    /// <summary>
+    /// Overload for instantiate
+    /// </summary>
+    /// <param name="prefab"></param>
+    /// <param name="position"></param>
+    /// <param name="rotation"></param>
+    /// <returns></returns>
     public static GameObject? Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
     {
         GameObject? @object = BaseInstantiate(prefab);
@@ -188,7 +232,11 @@ public class Pool : MonoBehaviour
     }
 
 
-    // Gets a pooled object from the pooled objects list, when given an id
+    /// <summary>
+    /// Gets a pooled object from the pooled objects list, when given an id
+    /// </summary>
+    /// <param name="id"></param>
+    /// <returns></returns>
     private static GameObject? GetPooledObject(int id)
     {
         foreach (GameObject pooledObject in pooledObjects)

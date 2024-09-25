@@ -9,7 +9,7 @@ namespace CementGB.Mod.Patches;
 
 internal static class GameModeMapTrackerPatch
 {
-    private static List<GameModeMapTracker> _instancesAlreadyExecuted = new();
+    private static readonly List<GameModeMapTracker> _instancesAlreadyExecuted = new();
 
     private static bool SceneNameAlreadyExists(GameModeMapTracker __instance, string sceneName)
     {

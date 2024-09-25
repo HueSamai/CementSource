@@ -1,5 +1,5 @@
-﻿using CementGB.Mod.Modules.NetBeard;
-using CementGB.Mod.src.Modules.ConfigModule;
+﻿using CementGB.Mod.Modules.ConfigModuie;
+using CementGB.Mod.Modules.NetBeard;
 using CementGB.Mod.Modules.PoolingModule;
 using CementGB.Mod.Utilities;
 using MelonLoader;
@@ -40,9 +40,7 @@ public class Mod : MelonMod
         get
         {
             if (_cementCompContainer == null)
-            {
                 _cementCompContainer = new GameObject("CMTSingletons");
-            }
             return _cementCompContainer;
         }
         set
