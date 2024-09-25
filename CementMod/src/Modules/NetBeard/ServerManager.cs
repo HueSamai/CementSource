@@ -1,66 +1,72 @@
 ﻿using Il2Cpp;
 using Il2CppCoatsink.UnityServices;
-using Il2CppCoreNet.Config;
-using Il2CppGB.Config;
-using Il2CppGB.UnityServices.Matchmaking;
+using Il2CppCoreNet;
+using Il2CppCS.CorePlatform;
+using Il2CppGB.Core.Bootstrappers;
+using Il2CppGB.Platform.Lobby;
+using MelonLoader;
 using System;
 using System.Linq;
 using UnityEngine;
-using UnityEngine.SceneManagement;
-namespace CementGB.Mod.Utilities;
 
-[MelonLoader.RegisterTypeInIl2Cpp]
-internal class ServerManager : MonoBehaviour
+namespace CementGB.Mod.Modules.NetBeard;
+
+[RegisterTypeInIl2Cpp]
+public class ServerManager : MonoBehaviour
 {
-    bool menuHasLoadedPreviously;
-    bool isServer;
+    public const string DEFAULT_IP = "127.0.0.1";
+    public const int DEFAULT_PORT = 5999;
 
-    void Awake()
+    public static bool DontAutoStart => Environment.GetCommandLineArgs().Contains("-DONT-AUTOSTART");
+    public static bool IsServer => Environment.GetCommandLineArgs().Contains("-SERVER");
+    public static bool IsAutoJoiner => !IsServer && (!string.IsNullOrWhiteSpace(_ip) || !string.IsNullOrWhiteSpace(_port));
+    public static string IP => string.IsNullOrWhiteSpace(_ip) ? "127.0.0.1" : _ip;
+    public static int Port => string.IsNullOrWhiteSpace(_port) ? DEFAULT_PORT : int.Parse(_port);
+
+    private static readonly string _ip = CommandLineParser.Instance.GetValueForKey("-ip", false);
+    private static readonly string _port = CommandLineParser.Instance.GetValueForKey("-port", false);
+
+    private void Awake()
     {
-        if (Environment.GetCommandLineArgs().Contains("-SERVER"))
-        {
-            isServer = true;
-        }
+        PlatformEvents.add_OnPlatformInitializedEvent(new Action(() => ServerBoot()));
 
-        SceneManager.add_sceneLoaded(new Action<Scene, LoadSceneMode>(WrapperFix));
+        Melon<Mod>.Logger.Msg("Setting up dedicated server overrides and initialization flags. . .");
+        AudioListener.pause = IsServer;
+        NetworkBootstrapper.IsDedicatedServer = IsServer;
+        Melon<Mod>.Logger.Msg(ConsoleColor.Green, "Done!");
     }
 
-    void WrapperFix(Scene scene, LoadSceneMode mode)
+    private void ServerBoot()
     {
-        if (menuHasLoadedPreviously) return;
-        if (scene.name == "Menu")
+        if (IsServer) UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
+        
+        LobbyManager.Instance.LobbyObject.AddComponent<DevelopmentTestServer>();
+        FindObjectOfType<NetworkBootstrapper>().AutoRunServer = IsServer && !DontAutoStart;
+
+        if (IsServer)
         {
-            menuHasLoadedPreviously = true;
+            GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false);
 
-            gameObject.AddComponent<DevelopmentTestServer>().ui = GameObject.Find("Global(Clone)/UI/PlatformUI/Development Server Menu").GetComponent<DevelopmentTestServerUI>();
-
-            // Launching from my server terminal gives the server arg which just mutes the game, hides the load level UI (it bugs out) and attempts to
-            // initialize integral coatsink wrappers
-            if (isServer)
-            {
-                UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
-                AudioListener.pause = true;
-                GameObject.Find("Global(Clone)/LevelLoadSystem").SetActive(false);
-            }
+            Melon<Mod>.Logger.Msg("Subscribing to server events. . .");
+            NetworkManager.add_OnServerStarted(new Action(OnServerStarted));
+            NetworkManager.add_OnClientConnected(new Action(OnClientConnected));
+            NetworkManager.add_OnClientStopped(new Action(OnClientStopped));
+            Melon<Mod>.Logger.Msg(ConsoleColor.Green, "Done!");
         }
     }
-}
 
-[HarmonyLib.HarmonyPatch(typeof(DevelopmentTestServer), nameof(DevelopmentTestServer.Awake))]
-public static class CLAFix
-{
-    public static void Postfix()
+    private void OnClientStopped()
     {
-        string valueForKey = CommandLineParser.Instance.GetValueForKey("-DDC_IP", true);
-        string valueForKey2 = CommandLineParser.Instance.GetValueForKey("-DDC_PORT", true);
+        throw new NotImplementedException();
+    }
 
-        if (!string.IsNullOrEmpty(valueForKey2))
-        {
-            DevelopmentTestServer.DirectConnectPort = int.Parse(valueForKey2);
-        }
-        if (!string.IsNullOrEmpty(valueForKey))
-        {
-            DevelopmentTestServer.DirectConnectIP = valueForKey;
-        }
+    private void OnClientConnected()
+    {
+        throw new NotImplementedException();
+    }
+
+    private void OnServerStarted()
+    {
+        Melon<Mod>.Logger.Msg(ConsoleColor.Green, $"Server is ready on port {Port}!");
     }
 }
