@@ -1,7 +1,7 @@
 ﻿using Il2CppFemur;
 using UnityEngine.InputSystem;
 
-namespace CementGB.Mod.Modules.NetBeard;
+namespace CementGB.Mod.Modules.BeastInput;
 
 public static class BeastInput
 {
