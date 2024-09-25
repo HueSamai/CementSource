@@ -6,6 +6,7 @@ using Il2CppTMPro;
 using MelonLoader;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Localization.Components;
@@ -32,9 +33,11 @@ public class ConfigModule : MonoBehaviour
     /// The extension for configs
     /// </summary>
     public const string CONFIG_EXTENSION = ".ccg";
-    internal List<string> modConfigs = new();
 
-    internal void Awake()
+    public static ReadOnlyCollection<string> ModConfigs => modConfigs.AsReadOnly();
+    private static readonly List<string> modConfigs = new();
+
+    private void Awake()
     {
         if (Instance != null) { Destroy(this); return; }
         Instance = this;
@@ -58,7 +61,7 @@ public class ConfigModule : MonoBehaviour
         return newConfig;
     }
 
-    internal static void ConstructConfigButton()
+    private static void ConstructConfigButton()
     {
         GameObject audioButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Audio");
         GameObject graphicsButton = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings/Graphics");
@@ -122,7 +125,7 @@ public class ConfigModule : MonoBehaviour
         return menuScreen;
     }
 
-    internal static void OnGUI()
+    private static void OnGUI()
     {
         if (GUILayout.Button("Construct config button"))
         {
@@ -136,7 +139,7 @@ public class ConfigModule : MonoBehaviour
 /// </summary>
 public class ModConfig
 {
-    internal ModConfig(string configID, string delimiter)
+    public ModConfig(string configID, string delimiter)
     {
         ConfigID = configID;
         Delimiter = delimiter;
