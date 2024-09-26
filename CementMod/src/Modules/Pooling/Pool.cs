@@ -6,11 +6,11 @@ using MelonLoader;
 
 namespace CementGB.Mod.Modules.PoolingModule;
 
-[RegisterTypeInIl2Cpp]
 /// <summary>
 /// Allows users to register poolable prefabs, instantiate them, and pool instances of those prefabs.
 /// This is useful for when lots of objects need to be spawned in, because objects are reused, and don't need to be destroyed or created.
 /// </summary>
+[RegisterTypeInIl2Cpp]
 public class Pool : MonoBehaviour
 {
     /// <summary>

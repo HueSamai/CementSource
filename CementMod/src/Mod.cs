@@ -1,4 +1,4 @@
-﻿using CementGB.Mod.Modules.ConfigModuie;
+﻿using CementGB.Mod.Modules.ConfigModule;
 using CementGB.Mod.Modules.NetBeard;
 using CementGB.Mod.Modules.PoolingModule;
 using CementGB.Mod.Utilities;

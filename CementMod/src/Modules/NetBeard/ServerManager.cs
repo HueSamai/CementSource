@@ -18,11 +18,12 @@ public class ServerManager : MonoBehaviour
     public const int DEFAULT_PORT = 5999;
 
     public static bool DontAutoStart => Environment.GetCommandLineArgs().Contains("-DONT-AUTOSTART");
-    public static bool IsServer => Environment.GetCommandLineArgs().Contains("-SERVER");
+    public static bool IsServer => Environment.GetCommandLineArgs().Contains("-Server");
     public static bool IsAutoJoiner => !IsServer && (!string.IsNullOrWhiteSpace(_ip) || !string.IsNullOrWhiteSpace(_port));
-    public static string IP => string.IsNullOrWhiteSpace(_ip) ? "127.0.0.1" : _ip;
+    public static string IP => string.IsNullOrWhiteSpace(_ip) ? DEFAULT_IP : _ip;
     public static int Port => string.IsNullOrWhiteSpace(_port) ? DEFAULT_PORT : int.Parse(_port);
 
+    // This isn't necessary but I'll keep it because I'll probably need it at some point
     private static readonly string _ip = CommandLineParser.Instance.GetValueForKey("-ip", false);
     private static readonly string _port = CommandLineParser.Instance.GetValueForKey("-port", false);
 
@@ -57,12 +58,12 @@ public class ServerManager : MonoBehaviour
 
     private void OnClientStopped()
     {
-        throw new NotImplementedException();
+        
     }
 
     private void OnClientConnected()
     {
-        throw new NotImplementedException();
+        
     }
 
     private void OnServerStarted()
