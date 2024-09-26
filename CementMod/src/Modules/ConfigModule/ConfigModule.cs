@@ -13,7 +13,7 @@ using UnityEngine.Localization.Components;
 using UnityEngine.Localization.PropertyVariants;
 using UnityEngine.UI;
 
-namespace CementGB.Mod.Modules.ConfigModuie;
+namespace CementGB.Mod.Modules.ConfigModule;
 
 [RegisterTypeInIl2Cpp]
 public class ConfigModule : MonoBehaviour
@@ -21,7 +21,7 @@ public class ConfigModule : MonoBehaviour
     public static ConfigModule? Instance
     {
         get;
-        protected set;
+        private set;
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class ConfigModule : MonoBehaviour
         Destroy(configObject.GetComponent<LocalizeStringEvent>());
         configObject.GetComponent<TextMeshProUGUI>().text = configObject.name;
 
-        Button configButton = configObject.GetComponent<Button>();
+        var configButton = configObject.GetComponent<Button>();
         configButton.onClick.m_PersistentCalls.Clear();
 
         BaseMenuScreen configMenu = ConstructConfigMenu();
