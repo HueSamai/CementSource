@@ -72,8 +72,3 @@ public class AlNavPoint : MonoBehaviour
 {
 
 }
-
-public class AlNavAgent : NavMeshAgent
-{
-
-}

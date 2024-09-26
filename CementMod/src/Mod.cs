@@ -7,6 +7,7 @@ using MelonLoader.Utils;
 using System.IO;
 using UnityEngine;
 using CementGB.Mod.Modules.AlligatorNavigator;
+using CementGB.Mod.Modules.BeastInput;
 
 namespace CementGB.Mod;
 
@@ -102,5 +103,6 @@ public class Mod : MelonMod
         CementCompContainer.AddComponent<ConfigModule>();
         CementCompContainer.AddComponent<Pool>();
         CementCompContainer.AddComponent<AlNavigator>();
+        CementCompContainer.AddComponent<BeastInput>();
     }
 }
