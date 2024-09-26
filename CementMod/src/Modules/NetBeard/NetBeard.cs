@@ -157,7 +157,7 @@ public class NetBeard : MonoBehaviour
         return parameters[0].ParameterType == typeof(NetworkMessage) && method.IsStatic;
     }
 
-    public static void InitFromServerHandlers()
+    private static void InitFromServerHandlers()
     {
         foreach (var melon in MelonAssembly.LoadedAssemblies)
         {
@@ -190,7 +190,7 @@ public class NetBeard : MonoBehaviour
         }
     }
 
-    public static void InitFromClientHandlers()
+    private static void InitFromClientHandlers()
     {
         foreach (var melon in MelonAssembly.LoadedAssemblies)
         {
