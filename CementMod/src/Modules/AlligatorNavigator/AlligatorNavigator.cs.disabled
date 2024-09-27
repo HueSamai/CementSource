@@ -13,10 +13,9 @@ namespace CementGB.Mod.Modules.AlligatorNavigator;
 [RegisterTypeInIl2Cpp]
 public class AlNavigator : MonoBehaviour
 {
-    private static bool _navMeshInScene;
-    private static List<Actor> _actorsToHandle = new();
+    private static readonly List<Actor> _actorsToHandle = new();
 
-    private static AlNavPoint[] _navPoints = new AlNavPoint[0];
+    private static AlNavPoint[] _navPoints = System.Array.Empty<AlNavPoint>();
 
     private void Awake()
     {
