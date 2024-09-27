@@ -8,6 +8,7 @@ using System.IO;
 using UnityEngine;
 using CementGB.Mod.Modules.AlligatorNavigator;
 using CementGB.Mod.Modules.BeastInput;
+using Unity.Services.Matchmaker.Models;
 
 namespace CementGB.Mod;
 
@@ -46,7 +47,7 @@ public class Mod : MelonMod
         }
         set
         {
-            Object.Destroy(_cementCompContainer);
+            UnityEngine.Object.Destroy(_cementCompContainer);
             _cementCompContainer = value;
         }
     }
@@ -84,6 +85,18 @@ public class Mod : MelonMod
         base.OnLateInitializeMelon();
 
         CreateCementComponents();
+        Tungsten.Init();
+        Tungsten.LoadScriptsFrom("D:\\SteamLibrary\\steamapps\\common\\Gang Beasts\\Gang Beasts__Data\\scripts.json");
+    }
+
+    /// <summary>
+    /// Fires every frame.
+    /// </summary>
+    public override void OnUpdate()
+    {
+        base.OnUpdate();
+
+        Tungsten.Update();
     }
 
     private static void FileStructure()
@@ -92,10 +105,33 @@ public class Mod : MelonMod
         Directory.CreateDirectory(customContentPath);
     }
 
+    /*
+    private static Assembly TryResolveEmbeddedAssembly(object sender, ResolveEventArgs args)
+    {
+        Assembly assembly = Il2CppSystem.Reflection.Assembly.GetExecutingAssembly();
+        foreach (string name in assembly.GetManifestResourceNames())
+        {
+            if (name.Contains(args._Name_k__BackingField))
+            {
+                string path = Path.Combine(Application.dataPath, Path.GetRandomFileName());
+                byte[] array = assembly.GetManifestResourceStream(name).ToByteArray();
+                FileStream stream = new(, FileMode.CreateNew);
+                stream.Write(array);
+                stream.Close();
+
+                return Il2CppSystem.Reflection.Assembly.LoadFrom();
+            }
+        }
+
+        return null;
+    }
+    */
+
+
     private static void CreateCementComponents()
     {
         CementCompContainer = new("CMTSingletons");
-        Object.DontDestroyOnLoad(CementCompContainer);
+        UnityEngine.Object.DontDestroyOnLoad(CementCompContainer);
         CementCompContainer.hideFlags = HideFlags.DontUnloadUnusedAsset;
 
         CementCompContainer.AddComponent<NetBeard>();
