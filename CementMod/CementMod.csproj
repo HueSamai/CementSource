@@ -11,6 +11,7 @@
     <OutputType>Library</OutputType>
     <DefineConstants>$(DefineConstants);MELONLOADER</DefineConstants>
     <LangVersion>10.0</LangVersion>
+	<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -42,6 +43,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\**\*" />
+	<EmbeddedResource Include="ref\MoonSharp\MoonSharp.Interpreter.dll" />
   </ItemGroup>
 
   <ItemGroup>
@@ -60,6 +62,10 @@
 
   <ItemGroup>
     <GameDirFile Include="..\game_dir.txt"></GameDirFile>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="ref\MoonSharp\" />
   </ItemGroup>
 
   <Target Name="BeforeRestore" BeforeTargets="Restore">
