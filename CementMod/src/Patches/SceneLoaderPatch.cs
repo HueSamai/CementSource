@@ -10,8 +10,6 @@ using UnityEngine.SceneManagement;
 
 namespace CementGB.Mod.Patches;
 
-#nullable disable
-
 [HarmonyLib.HarmonyPatch(typeof(SceneLoader), nameof(SceneLoader.LoadScene))]
 internal static class LoadScenePatch
 {

@@ -14,8 +14,8 @@ public static class CementPreferences
     /// </summary>
     public static bool VerboseMode => _verboseModeEntry?.Value ?? false;
 
-    private static MelonPreferences_Category? _cmtPrefCateg = MelonPreferences.CreateCategory("CementGBPrefs", "CementGB Preferences");
-    private static MelonPreferences_Entry<bool>? _verboseModeEntry;
+    private static MelonPreferences_Category _cmtPrefCateg = MelonPreferences.CreateCategory("CementGBPrefs", "CementGB Preferences");
+    private static MelonPreferences_Entry<bool> _verboseModeEntry;
 
     internal static void Initialize()
     {

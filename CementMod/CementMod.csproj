@@ -7,7 +7,7 @@
     <TargetFramework>net6.0</TargetFramework>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 
-    <Nullable>enable</Nullable>
+    <Nullable>disable</Nullable>
     <OutputType>Library</OutputType>
     <DefineConstants>$(DefineConstants);MELONLOADER</DefineConstants>
     <LangVersion>10.0</LangVersion>
@@ -24,7 +24,7 @@
 
     <OutputPath>bin\Debug\</OutputPath>
     <WarningLevel>4</WarningLevel>
-    <DocumentationFile>CementDocs.xml</DocumentationFile>
+    <!-- <DocumentationFile>CementDocs.xml</DocumentationFile> -->
   </PropertyGroup>
 
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">

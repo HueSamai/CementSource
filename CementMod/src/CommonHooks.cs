@@ -12,10 +12,10 @@ public static class CommonHooks
     /// <summary>
     /// Fired when the Menu scene loads for the first time in the app's lifespan. Will reset on application quit.
     /// </summary>
-    public static event Action? OnMenuFirstBoot;
-    public static event Action? OnGameSetup;
-    public static event Action? OnGameStart;
-    public static event Action? OnGameEnd;
+    public static event Action OnMenuFirstBoot;
+    public static event Action OnGameSetup;
+    public static event Action OnGameStart;
+    public static event Action OnGameEnd;
 
     private static bool _menuFirstBoot;
 
