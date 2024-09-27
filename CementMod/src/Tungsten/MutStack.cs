@@ -14,6 +14,7 @@ public class MutStack<T>
 
     public T[] PeekTop(int amount)
     {
+        if (amount == 0) return new T[0];
         return _array.AsSpan(top - amount, amount).ToArray();
     }
 

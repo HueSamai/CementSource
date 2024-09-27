@@ -2,14 +2,17 @@
 using System;
 using System.Collections.Generic;
 using CementGB.Mod.Utilities;
+using Il2Cpp;
+using UnityEngine.Rendering.Universal;
+using Il2CppPartyXBLCSharpSDK;
 
 namespace Tungsten;
 public static class VM
 {
-    private static MutStack<object?> stack = new();
+    private static MutStack<object?> stack = new(100);
     private static Stack<int> callStack = new();
+    private static Stack<int> _tempTopStackStore = new();
 
-    private static int _tempTopStackStore = 0;
     public static object? RunFunction(ProgramInfo info, string functionName, params object?[] args)
     {
         stack.Clear();
@@ -107,14 +110,14 @@ public static class VM
 
                 case Opcode.PREPCALL:
                     // this will be where the arguments begin
-                    _tempTopStackStore = stack.top;
+                    _tempTopStackStore.Push(stack.top);
                     break;
 
                 case Opcode.CALL:
                     callStack.Push(stack.indexBase);
                     callStack.Push(pc);
 
-                    stack.indexBase = _tempTopStackStore;
+                    stack.indexBase = _tempTopStackStore.Pop();
                     pc = (int)ins.operand;
 
                     break;
@@ -352,8 +355,10 @@ public static class VM
                     break;
 
                 case Opcode.EXT_INST_CALL:
-                    int argsPassed = stack.top - _tempTopStackStore;
+                    int topStack = _tempTopStackStore.Pop();
+                    int argsPassed = stack.top - topStack;
                     a = stack.Pop();
+
 
                     if (a == null)
                     {
@@ -362,7 +367,15 @@ public static class VM
                         return null;
                     }
 
-                    MethodInfo? methodInfo = a.GetType().GetMethod((string)ins.operand);
+                    object?[] objects = stack.PeekTop(argsPassed);
+                    Type[] types = new Type[argsPassed];
+                    int i = 0;
+                    foreach (object? obj in objects)
+                    {
+                        types[i++] = obj!.GetType();
+                    }
+
+                    MethodInfo? methodInfo = a.GetType().GetMethod((string)ins.operand, types);
 
                     if (methodInfo == null || argsPassed != methodInfo.GetParameters().Length)
                     {
@@ -372,9 +385,9 @@ public static class VM
                     }
 
                     int tempIndexBase = stack.indexBase;
-                    stack.indexBase = _tempTopStackStore;
+                    stack.indexBase = topStack;
 
-                    object? result = methodInfo.Invoke(a, stack.PeekTop(argsPassed));
+                    object? result = methodInfo.Invoke(a, objects);
 
                     stack.Pop(argsPassed);
                     stack.indexBase = tempIndexBase;
@@ -383,7 +396,8 @@ public static class VM
                     break;
 
                 case Opcode.EXT_STATIC_CALL:
-                    argsPassed = stack.top - _tempTopStackStore;
+                    topStack = _tempTopStackStore.Pop();
+                    argsPassed = stack.top - topStack;
 
                     string[] split = (ins.operand as string)!.Split('.');
                     string className = split[0];
@@ -397,19 +411,34 @@ public static class VM
                         return null;
                     }
 
-                    methodInfo = type.GetMethod(methodName);
+                    objects = stack.PeekTop(argsPassed);
+                    types = new Type[argsPassed];
+                    i = 0;
+                    foreach (object? obj in objects)
+                    {
+                        types[i++] = obj!.GetType();
+                        LoggingUtilities.VerboseLog(obj!.GetType().ToString());
+                    }
 
-                    if (methodInfo == null || argsPassed != methodInfo.GetParameters().Length)
+                    methodInfo = type.GetMethod(methodName, types);
+
+                    if (methodInfo == null)
                     {
                         // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
+                        LoggingUtilities.VerboseLog($"ERROR! Couldn't find external static method '{className}.{methodName}'");
+                        return null;
+                    }
+
+                    if (argsPassed != methodInfo.GetParameters().Length) {
+                        // raise error
+                        LoggingUtilities.VerboseLog($"ERROR! Passed {argsPassed} arguments when {methodInfo.GetParameters().Length} were expected.");
                         return null;
                     }
 
                     tempIndexBase = stack.indexBase;
-                    stack.indexBase = _tempTopStackStore;
+                    stack.indexBase = topStack;
 
-                    result = methodInfo.Invoke(null, stack.PeekTop(argsPassed));
+                    result = methodInfo.Invoke(null, objects);
 
                     stack.Pop(argsPassed);
                     stack.indexBase = tempIndexBase;
@@ -479,6 +508,7 @@ public static class VM
 
                     break;
             }
+
         }
     }
 

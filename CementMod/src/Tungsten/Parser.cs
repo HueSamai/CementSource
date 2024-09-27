@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2CppSystem.Linq.Expressions.Interpreter;
 using System.Collections.Generic;
 
 namespace Tungsten;
@@ -48,6 +49,8 @@ public enum Opcode
     RETURN,
 
     // c# interaction
+    // construct a c# object
+    EXT_CTOR,
     // call an external c# instance method of an object
     EXT_INST_CALL,
     // call an external static method in c#
@@ -111,9 +114,10 @@ public class Parser
         } while (token.type != TokenType.End);
 
         Dictionary<string, int> functionPointers = new();
-        functionPointers["fact"] = 0;
+        functionPointers["fact"] = 1;
+        functionPointers["glob"] = 19;
         return new ProgramInfo(
-            new string[] { "fact" },
+            new string[] { "fact", "glob" },
             new(),
             functionPointers,
             /*  
@@ -134,20 +138,30 @@ public class Parser
              */
             new Instruction[]
             {
+                new Instruction(Opcode.JMP, 19),
                 new Instruction(Opcode.PUSHLOCAL, 0),
                 new Instruction(Opcode.PUSH, 1),
                 new Instruction(Opcode.EQU),
                 new Instruction(Opcode.JFZ, 2),
-                new Instruction(Opcode.PUSH, 1),
+                new Instruction(Opcode.PUSH, "1"),
                 new Instruction(Opcode.RETURN),
                 new Instruction(Opcode.PUSHLOCAL, 0),
+                new Instruction(Opcode.PREPCALL),
                 new Instruction(Opcode.PREPCALL),
                 new Instruction(Opcode.PUSHLOCAL, 0),
                 new Instruction(Opcode.PUSH, 1),
                 new Instruction(Opcode.SUB, 0),
-                new Instruction(Opcode.CALL, 0),
+                new Instruction(Opcode.CALL, 1),
+                new Instruction(Opcode.EXT_STATIC_CALL, "Int32.Parse"),
                 new Instruction(Opcode.MULT),
+                new Instruction(Opcode.PREPCALL),
+                new Instruction(Opcode.EXT_INST_CALL, "ToString"),
                 new Instruction(Opcode.RETURN),
+                new Instruction(Opcode.PREPCALL),
+                new Instruction(Opcode.PUSHLOCAL, 0),
+                new Instruction(Opcode.CALL, 1),
+                new Instruction(Opcode.PUSHFIELD, "Length"),
+                new Instruction(Opcode.RETURN)
             }
         );
     }

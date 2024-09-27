@@ -20,6 +20,7 @@ public enum TokenType
     KeywordFalse,
     KeywordTrue,
     KeywordNull,
+    KeywordNew,
 
     OpenCurlyBracket,
     ClosedCurlyBracket,
@@ -77,7 +78,8 @@ public class Lexer
         { "var", TokenType.KeywordVar },
         { "true", TokenType.KeywordTrue },
         { "false", TokenType.KeywordFalse },
-        { "null", TokenType.KeywordNull }
+        { "null", TokenType.KeywordNull },
+        { "new", TokenType.KeywordNew }
     };
 
     public Lexer(string code)
@@ -177,6 +179,9 @@ public class Lexer
             case ',':
                 ++i;
                 return new Token(TokenType.Comma);
+            case ';':
+                ++i;
+                return new Token(TokenType.SemiColon);
             case '"':
                 return LexString();
             default:
