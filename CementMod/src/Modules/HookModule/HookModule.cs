@@ -62,7 +62,7 @@ public static class HookModule
             harmonyInstance.Patch(hook.hook, beforeEitherFix);
 
         var resultString = $"New {(hook.isPrefix ? "PREFIX" : "POSTFIX")} hook on {hook.original.DeclaringType?.Name}.{hook.original.Name} registered to {hook.hook.DeclaringType?.Name}.{hook.hook.Name} with {typeof(HarmonyLib.Harmony)} instance {harmonyInstance.Id}";
-        var fromModString = $"{resultString} from mod assembly {hook.callingMod.MelonAssembly.Assembly}";
+        var fromModString = $"{resultString} from mod assembly {hook.callingMod.MelonAssembly.Assembly.FullName}";
 
         Melon<Mod>.Logger.Msg(hook.callingMod is null ? resultString : fromModString);
     }
