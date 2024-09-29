@@ -2,9 +2,13 @@
 using System;
 using System.Collections.Generic;
 using CementGB.Mod.Utilities;
-using Il2Cpp;
-using UnityEngine.Rendering.Universal;
-using Il2CppPartyXBLCSharpSDK;
+using UnityEngine.Playables;
+using static Il2CppMono.Security.X509.X520;
+using Il2CppInterop.Runtime;
+using System.Linq;
+using Il2CppSystem.Xml.Serialization;
+using System.Collections;
+using Il2CppInterop.Runtime.InteropTypes.Arrays;
 
 namespace Tungsten;
 public static class VM
@@ -20,12 +24,30 @@ public static class VM
             foreach (object? arg in args)
                 stack.Push(arg);
 
-        if (!info.functionPointers.ContainsKey(functionName))
+        if (!info.functions.ContainsKey(functionName))
         {
             // raise an error
+            LoggingUtilities.VerboseLog("ERROR! No function.");
             return null;
         }
-        int pc = info.functionPointers[functionName];
+
+        if (args == null)
+        {
+            if (info.functions[functionName].arity > 0)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR! Incorrect number of args");
+                return null;
+            }
+        }
+        else if (info.functions[functionName].arity != args.Length)
+        {
+            // raise an error
+            LoggingUtilities.VerboseLog("ERROR! Incorrect number of args");
+            return null;
+        }
+
+        int pc = info.functions[functionName].start;
         
         while (true)
         {
@@ -79,13 +101,7 @@ public static class VM
 
                 case Opcode.SETGLOBAL:
                     string globalName = (string)ins.operand;
-                    if (!info.globalVariables.ContainsKey(globalName))
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-                    info.globalVariables[globalName] = stack.Pop();
+                    info.globalVariables[globalName] = stack.Peek();
                     break;
 
                 case Opcode.PUSHGLOBAL:
@@ -101,8 +117,9 @@ public static class VM
 
                 case Opcode.SETLOCAL:
                     int stackOffset = (int)ins.operand;
-                    stack[stackOffset] = stack.Pop();
+                    stack[stackOffset] = stack.Peek();
                     break;
+
                 case Opcode.PUSHLOCAL:
                     stackOffset = (int)ins.operand;
                     stack.Push(stack[stackOffset]);
@@ -118,7 +135,7 @@ public static class VM
                     callStack.Push(pc);
 
                     stack.indexBase = _tempTopStackStore.Pop();
-                    pc = (int)ins.operand;
+                    pc = info.functions[(string)ins.operand].start;
 
                     break;
 
@@ -184,34 +201,6 @@ public static class VM
 
                     break;
 
-                case Opcode.GTE:
-                    b = stack.Pop();
-                    a = stack.Pop();
-
-                    if (a == null || b == null)
-                    {
-                        // raise error: null reference exception
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-
-                    if (a.GetType() == typeof(int) && b.GetType() == typeof(int))
-                        stack.Push((int)a >= (int)b);
-
-                    else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a >= (float)b);
-
-                    else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
-                        stack.Push((float)a >= (float)b);
-                    else
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-
-                    break;
-
                 case Opcode.LSS:
                     b = stack.Pop();
                     a = stack.Pop();
@@ -227,10 +216,38 @@ public static class VM
                         stack.Push((int)a < (int)b);
 
                     else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a < (float)b);
+                        stack.Push(Convert.ToSingle(a) < Convert.ToSingle(b));
 
                     else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
                         stack.Push((float)a < (float)b);
+                    else
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    break;
+
+                case Opcode.GRT:
+                    b = stack.Pop();
+                    a = stack.Pop();
+
+                    if (a == null || b == null)
+                    {
+                        // raise error: null reference exception
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (a.GetType() == typeof(int) && b.GetType() == typeof(int))
+                        stack.Push((int)a > (int)b);
+
+                    else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
+                        stack.Push(Convert.ToSingle(a) > Convert.ToSingle(b));
+
+                    else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
+                        stack.Push((float)a > (float)b);
                     else
                     {
                         // raise error
@@ -255,7 +272,7 @@ public static class VM
                         stack.Push((int)a + (int)b);
 
                     else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a + (float)b);
+                        stack.Push(Convert.ToSingle(a) + Convert.ToSingle(b));
 
                     else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
                         stack.Push((float)a + (float)b);
@@ -286,7 +303,7 @@ public static class VM
                         stack.Push((int)a - (int)b);
 
                     else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a - (float)b);
+                        stack.Push(Convert.ToSingle(a) - Convert.ToSingle(b));
 
                     else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
                         stack.Push((float)a - (float)b);
@@ -314,7 +331,7 @@ public static class VM
                         stack.Push((int)a * (int)b);
 
                     else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a * (float)b);
+                        stack.Push(Convert.ToSingle(a) * Convert.ToSingle(b));
 
                     else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
                         stack.Push((float)a * (float)b);
@@ -342,7 +359,7 @@ public static class VM
                         stack.Push((int)a / (int)b);
 
                     else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
-                        stack.Push((float)a / (float)b);
+                        stack.Push(Convert.ToSingle(a) / Convert.ToSingle(b));
 
                     else if (a.GetType() == typeof(float) && b.GetType() == typeof(float))
                         stack.Push((float)a / (float)b);
@@ -355,98 +372,18 @@ public static class VM
                     break;
 
                 case Opcode.EXT_INST_CALL:
-                    int topStack = _tempTopStackStore.Pop();
-                    int argsPassed = stack.top - topStack;
-                    a = stack.Pop();
-
-
-                    if (a == null)
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-
-                    object?[] objects = stack.PeekTop(argsPassed);
-                    Type[] types = new Type[argsPassed];
-                    int i = 0;
-                    foreach (object? obj in objects)
-                    {
-                        types[i++] = obj!.GetType();
-                    }
-
-                    MethodInfo? methodInfo = a.GetType().GetMethod((string)ins.operand, types);
-
-                    if (methodInfo == null || argsPassed != methodInfo.GetParameters().Length)
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-
-                    int tempIndexBase = stack.indexBase;
-                    stack.indexBase = topStack;
-
-                    object? result = methodInfo.Invoke(a, objects);
-
-                    stack.Pop(argsPassed);
-                    stack.indexBase = tempIndexBase;
-
-                    stack.Push(result);
+                    if (!ExtCall(false, false, (string)ins.operand)) return null;
                     break;
-
+                    
                 case Opcode.EXT_STATIC_CALL:
-                    topStack = _tempTopStackStore.Pop();
-                    argsPassed = stack.top - topStack;
-
-                    string[] split = (ins.operand as string)!.Split('.');
-                    string className = split[0];
-                    string methodName = split[1];
-
-                    Type? type = GetType(className);
-                    if (type == null)
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog("ERROR!");
-                        return null;
-                    }
-
-                    objects = stack.PeekTop(argsPassed);
-                    types = new Type[argsPassed];
-                    i = 0;
-                    foreach (object? obj in objects)
-                    {
-                        types[i++] = obj!.GetType();
-                        LoggingUtilities.VerboseLog(obj!.GetType().ToString());
-                    }
-
-                    methodInfo = type.GetMethod(methodName, types);
-
-                    if (methodInfo == null)
-                    {
-                        // raise error
-                        LoggingUtilities.VerboseLog($"ERROR! Couldn't find external static method '{className}.{methodName}'");
-                        return null;
-                    }
-
-                    if (argsPassed != methodInfo.GetParameters().Length) {
-                        // raise error
-                        LoggingUtilities.VerboseLog($"ERROR! Passed {argsPassed} arguments when {methodInfo.GetParameters().Length} were expected.");
-                        return null;
-                    }
-
-                    tempIndexBase = stack.indexBase;
-                    stack.indexBase = topStack;
-
-                    result = methodInfo.Invoke(null, objects);
-
-                    stack.Pop(argsPassed);
-                    stack.indexBase = tempIndexBase;
-
-                    stack.Push(result);
+                    if (!ExtCall(true, false, (string)ins.operand)) return null;
                     break;
 
-                case Opcode.PUSHFIELD:
+                case Opcode.EXT_CTOR:
+                    if (!ExtCall(true, true, (string)ins.operand)) return null;
+                    break;
+
+                case Opcode.PUSH_INST_FIELD:
                     a = stack.Pop();
 
                     if (a == null)
@@ -456,28 +393,13 @@ public static class VM
                         return null;
                     }
 
-                    FieldInfo? fieldInfo = a.GetType().GetField((string)ins.operand);
-
-                    PropertyInfo? propertyInfo;
-                    if (fieldInfo == null)
-                    {
-                        propertyInfo = a.GetType().GetProperty((string)ins.operand);
-                        if (propertyInfo == null)
-                        {
-                            // raise error
-                            LoggingUtilities.VerboseLog("ERROR!");
-                            return null;
-                        }
-                        stack.Push(propertyInfo.GetValue(a));
-                    }
-                    else
-                    {
-                        stack.Push(fieldInfo.GetValue(a));
-                    }
+                    // check if failed
+                    if (!PushField(a.GetType(), (string)ins.operand, a))
+                        return null;
 
                     break;
 
-                case Opcode.SETFIELD:
+                case Opcode.SET_INST_FIELD:
                     b = stack.Pop(); // b is the value
                     a = stack.Pop();
 
@@ -488,28 +410,328 @@ public static class VM
                         return null;
                     }
 
-                    fieldInfo = a.GetType().GetField((string)ins.operand);
+                    if (!SetField(a.GetType(), (string)ins.operand, a, b))
+                        return null;
 
-                    if (fieldInfo == null)
+                    stack.Push(b);
+                    break;
+
+                case Opcode.PUSH_STATIC_FIELD:
+                    (string className, string fieldName) = GetClassAndSecondary((ins.operand as string)!);
+
+                    Type? type = GetType(className);
+                    if (type == null) {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (!PushField(type, fieldName, null))
+                        return null;
+
+                    break;
+
+                case Opcode.SET_STATIC_FIELD:
+                    b = stack.Peek(); // value
+
+                    (className, fieldName) = GetClassAndSecondary((ins.operand as string)!);
+
+                    type = GetType(className);
+                    if (type == null)
                     {
-                        propertyInfo = a.GetType().GetProperty((string)ins.operand);
-                        if (propertyInfo == null)
-                        {
-                            // raise error
-                            LoggingUtilities.VerboseLog("ERROR!");
-                            return null;
-                        }
-                        propertyInfo.SetValue(a, b);
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (!SetField(type, fieldName, null, b))
+                        return null;
+
+                    break;
+
+                case Opcode.GETARR:
+                    object? idxRaw = stack.Pop();
+                    int idx = 0;
+
+                    if (idxRaw == null || idxRaw.GetType() != typeof(int)) {
+
+                        // raise error 
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    idx = (int)idxRaw!;
+                    
+                    a = stack.Pop();
+
+                    if (a == null)
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (a.GetType().IsArray)
+                    {
+                        stack.Push((a as Array)!.GetValue(idx));
+                    }
+                    else if (a.GetType().IsAssignableTo(typeof(IList)))
+                    {
+                        stack.Push((a as IList)![idx]);
+                    }
+                    else if (a.GetType().FullName!.Split('`')[0] == typeof(Il2CppSystem.Collections.Generic.List<>).FullName!.Split('`')[0])
+                    {
+                        var items = a.GetType().GetProperty("_items").GetValue(a);
+                        var enumerator = (IEnumerator)items.GetType().GetMethod("GetEnumerator").Invoke(items, null)!;
+                        enumerator.MoveNext();
+                        for (int i = 0; i < idx; ++i)
+                            enumerator.MoveNext();
+                        stack.Push(enumerator.Current);
+                    }
+                    else 
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    break;
+
+                case Opcode.SETARR:
+                    b = stack.Pop();
+                    idx = (int)stack.Pop()!;
+                    a = stack.Pop();
+
+                    if (a == null)
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (a.GetType().IsArray)
+                    {
+                        (a as Array)!.SetValue(b, idx);
+                    }
+                    else if (a.GetType() == typeof(List<>))
+                    {
+                        a.GetType().GetGenericArguments();
+                        (a as IList)![idx] = b;
                     }
                     else
                     {
-                        fieldInfo.SetValue(a, b);
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
                     }
+
+                    stack.Push(b);
+                    break;
+
+                case Opcode.CRTARR:
+                    int topStack = _tempTopStackStore.Pop();
+                    int elementCount = stack.top - topStack;
+
+                    List<object?> arr = new();
+                    for (int i = 0; i < elementCount; ++i)
+                        arr.Add(stack.Pop());
+
+                    arr.Reverse();
+                    stack.Push(arr);
 
                     break;
             }
 
         }
+    }
+
+    private static (string, string) GetClassAndSecondary(string name)
+    {
+        string[] split = name.Split('.');
+        string className = "";
+        string sec = split.Last();
+        for (int i = 0; i < split.Length - 1; ++i)
+        {
+            className += split[i];
+            if (i < split.Length - 2)
+            {
+                className += '.';
+            }
+        }
+
+        return (className, sec);
+    }
+
+    private static bool ExtCall(bool isStatic, bool isCtor, string name)
+    {
+        int topStack = _tempTopStackStore.Pop();
+        int argsPassed = stack.top - topStack;
+
+        object? a = null;
+        if (!isStatic)
+            a = stack.Pop();
+
+        if (!isStatic && a == null)
+        {
+            // raise error
+            LoggingUtilities.VerboseLog("ERROR!");
+            return false;
+        }
+
+        object?[] objects = stack.PeekTop(argsPassed);
+
+        Type? type;
+        if (isStatic)
+        {
+            if (isCtor)
+            {
+                type = GetType(name);
+
+                if (type == null)
+                {
+                    // raise error
+                    LoggingUtilities.VerboseLog($"ERROR! Couldn't find type {type}");
+                    return false;
+                }
+            }
+            else
+            {
+                string[] split = name.Split('.');
+                string className = string.Join('.', split.AsSpan(0, split.Length - 1).ToArray());
+                name = split.Last();
+
+                type = GetType(className);
+
+                if (type == null)
+                {
+                    // raise error
+                    LoggingUtilities.VerboseLog($"ERROR! Couldn't find the type {className}");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            type = a!.GetType();
+        }
+
+        object? result;
+        int tempIndexBase;
+        if (isCtor)
+        {
+            Type[] types = new Type[argsPassed];
+            int i = 0;
+            foreach (object? obj in objects)
+            {
+                types[i++] = obj!.GetType();
+            }
+            ConstructorInfo? ctorInfo = type.GetConstructor(types);
+
+            if (ctorInfo == null || argsPassed != ctorInfo.GetParameters().Length)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR! Couldn't find method with that overload.");
+                return false;
+            }
+
+            tempIndexBase = stack.indexBase;
+            stack.indexBase = topStack;
+
+            result = ctorInfo.Invoke(objects);
+        }
+        else {
+            MethodInfo? methodInfo;
+            try
+            {
+                LoggingUtilities.VerboseLog("Trying to find method without types.");
+                methodInfo = type.GetMethod(name);
+            }
+            catch
+            {
+                LoggingUtilities.VerboseLog("Couldn't find method without types... Trying with types");
+                Type[] types = new Type[argsPassed];
+                int i = 0;
+                foreach (object? obj in objects)
+                {
+                    types[i++] = obj!.GetType();
+                }
+                methodInfo = type.GetMethod(name, types);
+            }
+
+            if (methodInfo == null)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR! Couldn't find method!");
+                return false;
+            }
+
+            if (argsPassed != methodInfo.GetParameters().Length)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR! Not correct amount of args!");
+                return false;
+            }
+
+            tempIndexBase = stack.indexBase;
+            stack.indexBase = topStack;
+
+            result = methodInfo.Invoke(a, objects);
+        }
+
+        stack.Pop(argsPassed);
+        stack.indexBase = tempIndexBase;
+
+        stack.Push(result);
+
+        return true;
+    }
+
+    private static bool PushField(Type type, string name, object? reference)
+    {
+        FieldInfo? fieldInfo = type.GetField(name);
+
+        PropertyInfo? propertyInfo;
+        if (fieldInfo == null)
+        {
+            propertyInfo = type.GetProperty(name);
+            if (propertyInfo == null)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR!");
+                return false;
+            }
+            stack.Push(propertyInfo.GetValue(reference));
+        }
+        else
+        {
+            stack.Push(fieldInfo.GetValue(reference));
+        }
+
+        return true;
+    }
+
+    private static bool SetField(Type type, string name, object? reference, object? value)
+    {
+
+        var fieldInfo = type.GetField(name);
+
+        if (fieldInfo == null)
+        {
+            var propertyInfo = type.GetProperty(name);
+            if (propertyInfo == null)
+            {
+                // raise error
+                LoggingUtilities.VerboseLog("ERROR!");
+                return false;
+            }
+            propertyInfo.SetValue(reference, value);
+        }
+        else
+        {
+            fieldInfo.SetValue(reference, value);
+        }
+
+        return true;
     }
 
     private static Dictionary<string, Type?> _nameToTypeCache = new();
@@ -528,5 +750,17 @@ public static class VM
                 }
 
         return null;
+    }
+
+    public static Il2CppSystem.Type? GetIl2CppType(string name)
+    {
+        Type? type = GetType(name);
+        if (type == null) return null;
+        return Il2CppType.From(type);
+    }
+
+    public static void Print(string msg)
+    {
+        LoggingUtilities.VerboseLog(msg);
     }
 }

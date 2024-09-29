@@ -5,7 +5,10 @@ namespace Tungsten;
 
 public enum TokenType
 {
+    // starts with a lowercase letter
     Identifier,
+    // starts with a capital letter
+    ClassIdentifier,
     Integer,
     Float,
     String,
@@ -43,8 +46,8 @@ public enum TokenType
     ForwardSlash,
     Bang,
 
-    Point,
     SemiColon,
+    Colon,
     Comma,
 
     End,
@@ -111,7 +114,7 @@ public class Lexer
     
     private bool IsIdentifier(char c)
     {
-        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_') || IsDigit(c);
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c == '_') || (c =='.') || IsDigit(c);
     }
 
     private bool IsDigit(char c)
@@ -173,15 +176,15 @@ public class Lexer
                 ++i;
                 if (Match('=')) return new Token(TokenType.BangEquals);
                 return new Token(TokenType.Bang);
-            case '.':
-                ++i;
-                return new Token(TokenType.Point);
             case ',':
                 ++i;
                 return new Token(TokenType.Comma);
             case ';':
                 ++i;
                 return new Token(TokenType.SemiColon);
+            case ':':
+                ++i;
+                return new Token(TokenType.Colon);
             case '"':
                 return LexString();
             default:
@@ -214,7 +217,7 @@ public class Lexer
             ++i;
             num += '.';
             bool raiseError = true;
-            while (IsDigit(Current))
+            while (!IsEnd && IsDigit(Current))
             {
                 num += Current;
                 ++i;
@@ -304,6 +307,6 @@ public class Lexer
         if (_keywords.ContainsKey(id))
             return new Token(_keywords[id]);
 
-        return new Token(TokenType.Identifier, id);
+        return new Token(char.IsUpper(id[0]) ? TokenType.ClassIdentifier : TokenType.Identifier, id);
     }
 }

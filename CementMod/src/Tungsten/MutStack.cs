@@ -18,6 +18,12 @@ public class MutStack<T>
         return _array.AsSpan(top - amount, amount).ToArray();
     }
 
+
+    public T Peek()
+    {
+        return _array[top - 1];
+    }
+
     public void Clear()
     {
         _array = new T[4];
@@ -38,6 +44,7 @@ public class MutStack<T>
             _array[indexBase + i] = value;
         }
     }
+
 
     public T Pop()
     {
