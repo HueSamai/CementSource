@@ -17,6 +17,7 @@ public static class VM
     private static Stack<int> callStack = new();
     private static Stack<int> _tempTopStackStore = new();
 
+    private static int cachedArrayIndex;
     public static object? RunFunction(ProgramInfo info, string functionName, params object?[] args)
     {
         stack.Clear();
@@ -52,7 +53,7 @@ public static class VM
         while (true)
         {
             Instruction ins = info.instructions[pc++];
-            LoggingUtilities.VerboseLog($"{ins.op} {ins.operand}");
+            // LoggingUtilities.VerboseLog($"{ins.op} {ins.operand}");
             switch (ins.op)
             {
                 case Opcode.JMP:
@@ -76,7 +77,7 @@ public static class VM
                     }
 
                     bool shouldJump = !(bool)cond;
-                    pc += Convert.ToInt32(shouldJump) * (int)ins.operand;
+                    pc = Convert.ToInt32(shouldJump) * ((int)ins.operand - pc) + pc;
                     break;
 
                 case Opcode.JNZ:
@@ -96,7 +97,7 @@ public static class VM
                     }
 
                     shouldJump = (bool)cond;
-                    pc += Convert.ToInt32(shouldJump) * (int)ins.operand;
+                    pc = Convert.ToInt32(shouldJump) * ((int)ins.operand - pc) + pc;
                     break;
 
                 case Opcode.SETGLOBAL:
@@ -344,6 +345,10 @@ public static class VM
 
                     break;
 
+                case Opcode.DUP:
+                    stack.Push(stack.Peek());
+                    break;
+
                 case Opcode.DIV:
                     b = stack.Pop();
                     a = stack.Pop();
@@ -449,7 +454,7 @@ public static class VM
 
                     break;
 
-                case Opcode.GETARR:
+                case Opcode.PUSHARR:
                     object? idxRaw = stack.Pop();
                     int idx = 0;
 
@@ -461,7 +466,8 @@ public static class VM
                     }
 
                     idx = (int)idxRaw!;
-                    
+                    cachedArrayIndex = idx;
+
                     a = stack.Pop();
 
                     if (a == null)
@@ -499,7 +505,49 @@ public static class VM
 
                 case Opcode.SETARR:
                     b = stack.Pop();
-                    idx = (int)stack.Pop()!;
+
+                    idxRaw = stack.Pop();
+
+                    if (idxRaw == null || idxRaw.GetType() != typeof(int))
+                    {
+
+                        // raise error 
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    idx = (int)idxRaw!;
+                    a = stack.Pop();
+
+                    if (a == null)
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    if (a.GetType().IsArray)
+                    {
+                        (a as Array)!.SetValue(b, idx);
+                    }
+                    else if (a.GetType() == typeof(List<>))
+                    {
+                        a.GetType().GetGenericArguments();
+                        (a as IList)![idx] = b;
+                    }
+                    else
+                    {
+                        // raise error
+                        LoggingUtilities.VerboseLog("ERROR!");
+                        return null;
+                    }
+
+                    stack.Push(b);
+                    break;
+
+                case Opcode.SETARR_CACHED:
+                    b = stack.Pop();
+                    idx = cachedArrayIndex;
                     a = stack.Pop();
 
                     if (a == null)
@@ -567,6 +615,10 @@ public static class VM
         int topStack = _tempTopStackStore.Pop();
         int argsPassed = stack.top - topStack;
 
+        object?[] objects = stack.PeekTop(argsPassed);
+        stack.Pop(argsPassed);
+
+
         object? a = null;
         if (!isStatic)
             a = stack.Pop();
@@ -577,8 +629,6 @@ public static class VM
             LoggingUtilities.VerboseLog("ERROR!");
             return false;
         }
-
-        object?[] objects = stack.PeekTop(argsPassed);
 
         Type? type;
         if (isStatic)
@@ -678,7 +728,6 @@ public static class VM
             result = methodInfo.Invoke(a, objects);
         }
 
-        stack.Pop(argsPassed);
         stack.indexBase = tempIndexBase;
 
         stack.Push(result);
@@ -762,5 +811,20 @@ public static class VM
     public static void Print(string msg)
     {
         LoggingUtilities.VerboseLog(msg);
+    }
+
+    public static Range Range(int end)
+    {
+        return new Range(0, end, 1);
+    }
+
+    public static Range Range(int start, int end)
+    {
+        return new Range(start, end, 1);
+    }
+
+    public static Range Range(int start, int end, int step)
+    {
+        return new Range(start, end, step);
     }
 }

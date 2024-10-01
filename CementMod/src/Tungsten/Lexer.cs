@@ -24,6 +24,9 @@ public enum TokenType
     KeywordTrue,
     KeywordNull,
     KeywordNew,
+    KeywordBreak,
+    KeywordContinue,
+    KeywordIn,
 
     OpenCurlyBracket,
     ClosedCurlyBracket,
@@ -82,7 +85,10 @@ public class Lexer
         { "true", TokenType.KeywordTrue },
         { "false", TokenType.KeywordFalse },
         { "null", TokenType.KeywordNull },
-        { "new", TokenType.KeywordNew }
+        { "new", TokenType.KeywordNew },
+        { "break", TokenType.KeywordBreak },
+        { "continue", TokenType.KeywordContinue },
+        { "in", TokenType.KeywordIn }
     };
 
     public Lexer(string code)
