@@ -1,4 +1,5 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2CppDG.Tweening.Plugins;
 using Il2CppGB.Core;
 using Il2CppGB.UI.Utils;
 using Il2CppGB.Utils;
@@ -65,6 +66,7 @@ public enum Opcode
     RETURN,
 
     // c# interaction
+    SET_GENERICS,
     // construct a c# object
     EXT_CTOR,
     // call an external c# instance method of an object
@@ -975,17 +977,30 @@ public class Parser
             methodOrFieldName = prevToken.lexeme + "." + methodOrFieldName;
         }
 
-        if (Current.type == TokenType.OpenParenthesis)
+        string[] generics = null;
+        if (Match(TokenType.DoubleLess))
         {
-            Advance();
+            generics = ParseGenerics();
+        }
+
+        if (Match(TokenType.OpenParenthesis))
+        {
             ParseArguments(TokenType.ClosedParenthesis);
+            if (generics != null)
+            {
+                Add(Opcode.SET_GENERICS, generics);
+            }
             Add(isStatic ? Opcode.EXT_STATIC_CALL : Opcode.EXT_INST_CALL, methodOrFieldName, idTok.lineIdx);
         }
         else
         {
-            if (Current.type == TokenType.Equals)
+            if (generics != null)
             {
-                Advance();
+                Error(Current, "Expected '(' after generic arguments.");
+            }
+
+            if (Match(TokenType.Equals))
+            {
                 ParsePrecedence(0);
                 Add(isStatic ? Opcode.SET_STATIC_FIELD : Opcode.SET_INST_FIELD, methodOrFieldName, idTok.lineIdx);
             }
@@ -994,6 +1009,34 @@ public class Parser
                 Add(isStatic ? Opcode.PUSH_STATIC_FIELD : Opcode.PUSH_INST_FIELD, methodOrFieldName, idTok.lineIdx);
             }
         }
+    }
+
+    private string[] ParseGenerics()
+    {
+        LoggingUtilities.VerboseLog("PARSING GENERICS!");
+        List<string> generics = new();
+
+        while (Current.type != TokenType.End && Current.type != TokenType.DoubleGreater)
+        {
+            string id = Current.lexeme;
+            Consume(TokenType.ClassIdentifier, "Expected class identifier as generic argument.");
+
+            generics.Add(id);
+            if (Current.type == TokenType.DoubleGreater)
+            {
+                break;
+            }
+            Consume(TokenType.Comma, "Expected ',' between generic arguments.");
+        }
+        Consume(TokenType.DoubleGreater, "Expected '>' after generic arguments.");
+
+        if (generics.Count == 0)
+        {
+            Error(Previous, "At least one generic argument needs to be passed. If the method has no generics, then just remove the '<>'.");
+            return null;
+        }
+
+        return generics.ToArray();
     }
 
     private static Dictionary<TokenType, char> endTokenToChar = new()
@@ -1017,10 +1060,16 @@ public class Parser
 
     private void HandleIdentifier()
     {
-        string variableName = GetAnyId();
-        if (Current.type == TokenType.OpenParenthesis) 
+        if (Match(TokenType.DoubleLess))
         {
-            Advance();
+            Error(Previous, "Tungsten functions don't support generics. You can only use generics when calling methods.");
+            while (Current.type != TokenType.End && Current.type != TokenType.DoubleGreater)
+                Advance();
+        }
+
+        string variableName = GetAnyId();
+        if (Match(TokenType.OpenParenthesis)) 
+        {
             ParseArguments(TokenType.ClosedParenthesis);
             Add(Opcode.CALL, variableName);
         }
@@ -1029,9 +1078,8 @@ public class Parser
             int varLocation = GetVariable(variableName);
             if (varLocation < 0)
             {
-                if (Current.type == TokenType.Equals)
+                if (Match(TokenType.Equals))
                 {
-                    Advance();
                     ParsePrecedence(0);
                     Add(Opcode.SETGLOBAL, variableName);
                 }
@@ -1040,9 +1088,8 @@ public class Parser
             }
             else
             {
-                if (Current.type == TokenType.Equals)
+                if (Match(TokenType.Equals))
                 {
-                    Advance();
                     ParsePrecedence(0);
                     Add(Opcode.SETLOCAL, varLocation);
                 }

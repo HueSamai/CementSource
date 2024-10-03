@@ -38,9 +38,11 @@ public enum TokenType
 
     Equals,
     Greater,
+    GreaterEquals,
+    DoubleGreater,
     Less,
     LessEquals,
-    GreaterEquals,
+    DoubleLess,
     DoubleEquals,
     BangEquals,
 
@@ -208,7 +210,6 @@ public class Lexer
                 if (Match('='))
                 {
                     tok = Token(TokenType.DoubleEquals);
-                    Advance();
                     return tok;
                 }
                 return tok;
@@ -218,7 +219,11 @@ public class Lexer
                 if (Match('='))
                 {
                     tok = Token(TokenType.GreaterEquals);
-                    Advance();
+                    return tok;
+                }
+                if (Match('>'))
+                {
+                    tok = Token(TokenType.DoubleGreater);
                     return tok;
                 }
                 return tok;
@@ -228,7 +233,11 @@ public class Lexer
                 if (Match('='))
                 {
                     tok = Token(TokenType.LessEquals);
-                    Advance();
+                    return tok;
+                }
+                if (Match('<'))
+                {
+                    tok = Token(TokenType.DoubleLess);
                     return tok;
                 }
                 return tok;
@@ -238,7 +247,6 @@ public class Lexer
                 if (Match('='))
                 {
                     tok = Token(TokenType.BangEquals);
-                    Advance();
                     return tok;
                 }
                 return tok;

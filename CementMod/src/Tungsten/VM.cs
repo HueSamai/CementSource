@@ -9,6 +9,9 @@ using Il2CppSystem.ComponentModel;
 using Il2CppCoatsink.Platform.Systems.Online.Connections;
 using Il2CppIonic.Zlib;
 using System.Runtime.Intrinsics.Arm;
+using UnityEngine;
+using Il2CppDG.Tweening.Plugins;
+using static Il2CppMono.Security.X509.X520;
 
 namespace Tungsten;
 public static class VM
@@ -25,6 +28,9 @@ public static class VM
     private static ErrorManager currentErrorManager;
 
     private static int pc;
+
+    private static string[] generics;
+
     public static bool HadError {
         get;
         private set;
@@ -384,6 +390,10 @@ public static class VM
                 }
                 break;
 
+            case Opcode.SET_GENERICS:
+                generics = (string[])ins.operand;
+                break;
+
             case Opcode.EXT_INST_CALL:
                 if (!ExtCall(ins, false, false, (string)ins.operand)) return true;
                 break;
@@ -618,6 +628,22 @@ public static class VM
         return (className, sec);
     }
 
+    private static bool HasGenerics => generics != null && generics.Length > 0;
+    private static Type[] GetGenerics(Instruction ins)
+    {
+        Type[] types = new Type[generics.Length];
+        for (int i = 0; i < generics.Length; ++i)
+        {
+            types[i] = GetType(generics[i]);
+            if (types[i] == null)
+            {
+                Error(ins.lineIdx, $"Null reference. Couldn't find type '{generics[i]}' used in generic.");
+                return null;
+            }
+        }
+        return types;
+    }
+
     private static bool ExtCall(Instruction ins, bool isStatic, bool isCtor, string name)
     {
         int topStack = _tempTopStackStore.Pop();
@@ -722,16 +748,40 @@ public static class VM
                 return false;
             }
 
+            if (HasGenerics)
+            {
+                var generics = GetGenerics(ins);
+                if (generics == null)
+                    return false;
+
+                try
+                {
+                    methodInfo = methodInfo.MakeGenericMethod(generics);
+                    if (methodInfo == null)
+                        throw new Exception();
+                }
+                catch
+                {
+                    Error(ins.lineIdx, $"Failed to create a generic method '{name}', with the generics you passed.");
+                    return false;
+                }
+            }
+
             tempIndexBase = stack.indexBase;
             stack.indexBase = topStack;
 
             result = methodInfo.Invoke(a, objects);
+            if (name == "GetComponent")
+            {
+                result = Convert.ChangeType(result, typeof(MeshRenderer));
+            }
         }
 
         stack.indexBase = tempIndexBase;
 
         stack.Push(result);
 
+        generics = null;
         return true;
     }
 
@@ -784,15 +834,21 @@ public static class VM
     {
         do
         {
-            var members = type.GetMember(name, BindingFlags.FlattenHierarchy | BindingFlags.Instance |
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (MemberInfo member in members)
-            {
-                if (member.MemberType == memberTypes)
-                {
+            LoggingUtilities.VerboseLog($"LOOKING FOR MEMBER IN {type.Name}");
+
+            var members = type.GetMember(name);
+
+            foreach (var member in members)
+                if ((member.MemberType & memberTypes) != 0)
                     return member;
-                }
-            }
+
+
+            members = type.GetMember(name, memberTypes, BindingFlags.FlattenHierarchy | BindingFlags.Instance |
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+
+            if (members.Length > 0)
+                return members[0];
+
             type = type.BaseType;
         } while (type != null);
 
