@@ -737,28 +737,21 @@ public static class VM
 
     private static bool PushField(Instruction ins, Type type, string name, object? reference)
     {
-        FieldInfo? fieldInfo = type.GetField(name);
+        var fieldOrPropertyInfo = GetMember(type, name, MemberTypes.Field | MemberTypes.Property);
 
-        PropertyInfo? propertyInfo;
-        if (fieldInfo == null)
+        if (fieldOrPropertyInfo == null)
         {
-            propertyInfo = type.GetProperty(name, BindingFlags.FlattenHierarchy | BindingFlags.Instance |
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            if (propertyInfo == null)
-            {
-                propertyInfo = type.GetProperty(name, BindingFlags.DeclaredOnly | BindingFlags.Instance |
-                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-            if (propertyInfo == null)
-            {
-                Error(ins.lineIdx, $"Couldn't get property. A property with the name '{name}' doesn't exist.");
-                return false;
-            }
-            stack.Push(propertyInfo.GetValue(reference));
+            Error(ins.lineIdx, $"Couldn't set property. A property with the name '{name}' doesn't exist.");
+            return false;
         }
-        else
+
+        if (fieldOrPropertyInfo.MemberType == MemberTypes.Field)
         {
-            stack.Push(fieldInfo.GetValue(reference));
+            stack.Push(((FieldInfo)fieldOrPropertyInfo).GetValue(reference));
+        }
+        else if (fieldOrPropertyInfo.MemberType == MemberTypes.Property)
+        {
+            stack.Push(((PropertyInfo)fieldOrPropertyInfo).GetValue(reference));
         }
 
         return true;
@@ -766,27 +759,21 @@ public static class VM
 
     private static bool SetField(Instruction ins, Type type, string name, object? reference, object? value)
     {
-        var fieldInfo = type.GetField(name);
+        var fieldOrPropertyInfo = GetMember(type, name, MemberTypes.Field | MemberTypes.Property);
 
-        if (fieldInfo == null)
+        if (fieldOrPropertyInfo == null)
         {
-            var propertyInfo = type.GetProperty(name, BindingFlags.FlattenHierarchy | BindingFlags.Instance | 
-                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            if (propertyInfo == null)
-            {
-                propertyInfo = type.GetProperty(name, BindingFlags.DeclaredOnly | BindingFlags.Instance | 
-                    BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
-            }
-            if (propertyInfo == null)
-            {
-                Error(ins.lineIdx, $"Couldn't set property. A property with the name '{name}' doesn't exist.");
-                return false;
-            }
-            propertyInfo.SetValue(reference, value);
+            Error(ins.lineIdx, $"Couldn't set property. A property with the name '{name}' doesn't exist.");
+            return false;
         }
-        else
+        
+        if (fieldOrPropertyInfo.MemberType == MemberTypes.Field)
         {
-            fieldInfo.SetValue(reference, value);
+            ((FieldInfo)fieldOrPropertyInfo).SetValue(reference, value);
+        }
+        else if (fieldOrPropertyInfo.MemberType == MemberTypes.Property)
+        {
+            ((PropertyInfo)fieldOrPropertyInfo).SetValue(reference, value);
         }
 
         return true;
