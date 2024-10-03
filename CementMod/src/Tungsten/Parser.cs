@@ -726,6 +726,18 @@ public class Parser
                 Advance();
                 break;
 
+            case TokenType.KeywordTrue:
+                Add(Opcode.PUSH, true);
+                break;
+
+            case TokenType.KeywordFalse:
+                Add(Opcode.PUSH, false);
+                break;
+
+            case TokenType.KeywordNull:
+                Add(Opcode.PUSH, null);
+                break;
+
             case TokenType.KeywordNew:
                 HandleCtor();
                 break;
