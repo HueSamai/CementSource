@@ -1,4 +1,6 @@
-﻿namespace Tungsten;
+﻿using MelonLoader;
+
+namespace Tungsten;
 public class Script
 {
     public bool faultyScript { get; private set; }
@@ -8,19 +10,26 @@ public class Script
     {
         Parser parser = new(code);
         programInfo = parser.Parse();
-        faultyScript = parser.hadError;
+
+        faultyScript = parser.HadError;
 
         RunFunction("__regglobal");
     }
 
     public object? RunFunction(string functionName, params object?[] args)
     {
-        if (faultyScript || programInfo == null) return null;
-        return VM.RunFunction((ProgramInfo)programInfo, functionName, args);
-    }
+        if (programInfo == null)
+        {
+            MelonLogger.Error("Script doesn't have a program loaded.");
+            return null;
+        }
 
-    public object? RunFunction(string functionName, int arg)
-    {
-        return RunFunction(functionName, new object? [] { arg });
+        if (faultyScript)
+        {
+            ((ProgramInfo)programInfo).errorManager.RaiseRuntimeError(-1, "Cannot run faulty script.");
+            return null;
+        }
+
+        return VM.RunFunction((ProgramInfo)programInfo, functionName, args);
     }
 }

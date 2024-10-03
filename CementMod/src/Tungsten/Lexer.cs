@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System;
+using Il2CppSystem.Data;
 
 namespace Tungsten;
 
@@ -62,17 +63,26 @@ public struct Token
     public TokenType type;
     public string lexeme;
 
-    public Token(TokenType type, string lexeme="")
+    public int lineIdx;
+    public int charIdx;
+
+    public Token(TokenType type, string lexeme="", int lineIdx = -1, int charIdx = -1)
     {
         this.type = type;
         this.lexeme = lexeme;
+        this.lineIdx = lineIdx;
+        this.charIdx = charIdx;
     }
 }
 
 public class Lexer
 {
     private string _code;
-    private int i;
+    private int i = -1;
+
+    private int lineIdx = 0;
+    private int charIdx = -1;
+    private char Current => _code[i];
 
     private Dictionary<string, TokenType> _keywords = new() {
         { "if", TokenType.KeywordIf },
@@ -91,25 +101,50 @@ public class Lexer
         { "in", TokenType.KeywordIn }
     };
 
-    public Lexer(string code)
+    private void Advance()
+    {
+        ++i;
+
+        if (IsEnd)
+        {
+            errorManager.AppendAsLine();
+            ++charIdx;
+            return;
+        }
+
+        if (Current == '\n')
+        {
+            charIdx = -1;
+            ++lineIdx;
+            errorManager.AppendAsLine();
+        }
+        else
+        {
+            errorManager.AddChar(Current);
+        }
+        ++charIdx;
+    }
+
+    private ErrorManager errorManager;
+
+    public Lexer(string code, ErrorManager errorManager=null)
     {
         _code = code;
-        i = 0;
+        this.errorManager = errorManager == null ? new ErrorManager() : errorManager;
+        Advance();
     }
 
     private void RemoveWhitespace()
     {
         while (!IsEnd && char.IsWhiteSpace(_code[i]))
-            ++i;
+            Advance();
     }
-
-    private char Current => _code[i];
 
     private bool Match(char c)
     {
         if (Current == c)
         {
-            ++i;
+            Advance();
             return true;
         }
 
@@ -128,69 +163,86 @@ public class Lexer
         return c >= '0' && c <= '9';
     }
 
-
     public Token Next()
     {
         RemoveWhitespace();
-        if (IsEnd) return new Token(TokenType.End);
+        if (IsEnd) return Token(TokenType.End);
 
+        Token tok;
+        bool gotTok = true;
         switch (Current)
         {
             case '+':
-                ++i;
-                return new Token(TokenType.Plus);
+                tok = Token(TokenType.Plus);
+                break;
             case '-':
-                ++i;
-                return new Token(TokenType.Minus);
+                tok = Token(TokenType.Minus);
+                break;
             case '*':
-                ++i;
-                return new Token(TokenType.Asterisk);
+                tok = Token(TokenType.Asterisk);
+                break;
             case '/':
-                ++i;
-                return new Token(TokenType.ForwardSlash);
+                tok = Token(TokenType.ForwardSlash);
+                break;
             case '(':
-                ++i;
-                return new Token(TokenType.OpenParenthesis);
+                tok = Token(TokenType.OpenParenthesis);
+                break;
             case ')':
-                ++i;
-                return new Token(TokenType.ClosedParenthesis);
+                tok = Token(TokenType.ClosedParenthesis);
+                break;
             case '[':
-                ++i;
-                return new Token(TokenType.OpenSquareBracket);
+                tok = Token(TokenType.OpenSquareBracket);
+                break;
             case ']':
-                ++i;
-                return new Token(TokenType.ClosedSquareBracket);
+                tok = Token(TokenType.ClosedSquareBracket);
+                break;
             case '{':
-                ++i;
-                return new Token(TokenType.OpenCurlyBracket);
+                tok = Token(TokenType.OpenCurlyBracket);
+                break;
             case '}':
-                ++i;
-                return new Token(TokenType.ClosedCurlyBracket);
+                tok = Token(TokenType.ClosedCurlyBracket);
+                break;
             case '=':
-                ++i;
-                if (Match('=')) return new Token(TokenType.DoubleEquals);
-                return new Token(TokenType.Equals);
+                if (Match('='))
+                {
+                    tok = Token(TokenType.DoubleEquals);
+                    break;
+                }
+                tok = Token(TokenType.Equals);
+                break;
             case '>':
-                ++i;
-                if (Match('=')) return new Token(TokenType.GreaterEquals);
-                return new Token(TokenType.Greater);
+                if (Match('='))
+                {
+                    tok = Token(TokenType.GreaterEquals);
+                    break;
+                }
+                tok = Token(TokenType.Greater);
+                break;
             case '<':
-                ++i;
-                if (Match('=')) return new Token(TokenType.LessEquals);
-                return new Token(TokenType.Less);
+                if (Match('='))
+                {
+                    tok = Token(TokenType.LessEquals);
+                    break;
+                }
+                tok = Token(TokenType.Less);
+                break;
             case '!':
-                ++i;
-                if (Match('=')) return new Token(TokenType.BangEquals);
-                return new Token(TokenType.Bang);
+                if (Match('='))
+                {
+                    tok = Token(TokenType.BangEquals);
+                    break;
+                }
+                tok = Token(TokenType.Bang);
+                break;
             case ',':
-                ++i;
-                return new Token(TokenType.Comma);
+                tok = Token(TokenType.Comma);
+                break;
             case ';':
-                ++i;
-                return new Token(TokenType.SemiColon);
+                tok = Token(TokenType.SemiColon);
+                break;
             case ':':
-                ++i;
-                return new Token(TokenType.Colon);
+                tok = Token(TokenType.Colon);
+                break;
             case '"':
                 return LexString();
             default:
@@ -199,53 +251,60 @@ public class Lexer
                 if (IsIdentifier(Current))
                     return LexId();
 
+                tok = Token(TokenType.Error);
+                Error($"Unexpected character '{Current}'");
                 break;
-                
         }
 
-        ++i;
-        return new Token(TokenType.Error);
+        Advance();
+        return tok;
     }
 
     private Token LexNum()
     {
+        int line = this.lineIdx;
+        int charIdx = this.charIdx;
+
         string num = "";
         while (!IsEnd && IsDigit(Current))
         {
             num += Current;
-            ++i;
+            Advance();
         }
 
         bool isInt = true;
         if (!IsEnd && Current == '.')
         {
             isInt = false;
-            ++i;
+            Advance();
             num += '.';
             bool raiseError = true;
             while (!IsEnd && IsDigit(Current))
             {
                 num += Current;
-                ++i;
+                Advance();
                 raiseError = false;
             }
 
             if (raiseError)
             {
-                // raise error
+;               Error("There must be at least one digit after the decimal point.");
             }
         }
 
-        return new Token(isInt ? TokenType.Integer : TokenType.Float, num);
+        return Token(isInt ? TokenType.Integer : TokenType.Float, num, line, charIdx);
     }
 
     private Token LexString()
     {
-        ++i; // advance past "
+        int line = this.lineIdx;
+        int charIdx = this.charIdx;
+
+        Advance(); // advance past "
         if (IsEnd)
         {
-            // raise error
-            return new Token(TokenType.String, "");
+            Error("Expected contents of string after '\"', but got nothing.");
+            return Token(TokenType.String, "", line, charIdx);
         }
 
         string s = "";
@@ -253,16 +312,17 @@ public class Lexer
         {
             if (Current == '\n')
             {
-                // raise an error
+                Error("Expected '\"' to close string; strings can't span several lines." + 
+                    "If you want to include a newline in your string use '\\n'");
                 break;
             }
             if (Current == '\\')
             {
-                ++i;
+                Advance();
                 if (IsEnd)
                 {
-                    // raise error
-                    return new Token(TokenType.String, s);
+                    Error("Expected character after '\\'.");
+                    return Token(TokenType.String, s, line, charIdx);
                 }
                 switch (Current)
                 {
@@ -282,7 +342,7 @@ public class Lexer
                         s += '\t';
                         break;
                     default:
-                        // throw an error
+                        Error("Invalid backspaced character. If you wanted to type a backslash use '\\\\'.");
                         break;
                 }
             }
@@ -290,29 +350,42 @@ public class Lexer
             {
                 s += Current;
             }
-            ++i;
+            Advance();
             if (IsEnd)
             {
-                // raise error
+                Error("Expected '\"' at the end of the string.");
                 break;
             }
         }
-        if (Current == '"') ++i;
-        return new Token(TokenType.String, s);
+        if (Current == '"') Advance();
+        return Token(TokenType.String, s, line, charIdx);
     }
 
     private Token LexId()
     {
+        int line = this.lineIdx;
+        int charIdx = this.charIdx;
+
         string id = "";
         while (!IsEnd && IsIdentifier(Current))
         {
             id += Current;
-            ++i;
+            Advance();
         }
 
         if (_keywords.ContainsKey(id))
-            return new Token(_keywords[id]);
+            return Token(_keywords[id], lineIdx: line, charIdx: charIdx);
 
-        return new Token(char.IsUpper(id[0]) ? TokenType.ClassIdentifier : TokenType.Identifier, id);
+        return Token(char.IsUpper(id[0]) ? TokenType.ClassIdentifier : TokenType.Identifier, id, line, charIdx);
+    }
+
+    private Token Token(TokenType type, string lexeme = "", int lineIdx = -1, int charIdx = -1)
+    {
+        return new Token(type, lexeme, lineIdx == -1 ? this.lineIdx : lineIdx, charIdx == -1 ? this.charIdx : charIdx);
+    }
+
+    private void Error(string message)
+    {
+        errorManager.RaiseSyntaxError(lineIdx, charIdx, message);
     }
 }

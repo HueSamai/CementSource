@@ -1,4 +1,6 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2CppGB.Core;
+using Il2CppGB.UI.Utils;
 using Il2CppGB.Utils;
 using Il2CppPlayFab.ClientModels;
 using Il2CppSystem;
@@ -8,13 +10,17 @@ using Il2CppSystem.Xml.Serialization;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using Unity.Services.Authentication;
 using UnityEngine.Playables;
 using UnityEngine.Rendering.Universal;
+using static Il2CppMono.Security.X509.X520;
 
 namespace Tungsten;
 
 public enum Opcode
 {
+    NOP, // no operation
+
     // pops, then peforms op on last two values on the stack, and pushes the result
     ADD,    
     SUB,
@@ -88,10 +94,13 @@ public struct Instruction
     public Opcode op;
     public object operand;
 
-    public Instruction(Opcode op, object? operand=null)
+    public int lineIdx;
+
+    public Instruction(Opcode op, object? operand=null, int lineIdx = -1)
     {
         this.op = op;
         this.operand = operand;
+        this.lineIdx = lineIdx;
     }
 
     public string ToString()
@@ -110,13 +119,21 @@ public struct ProgramInfo
     public Dictionary<string, object?> globalVariables;
     public Dictionary<string, FuncInfo> functions;
     public Instruction[] instructions;
-
-    public ProgramInfo(string[] globals,  Dictionary<string, object?> globalVariables, Dictionary<string, FuncInfo> functions, Instruction[] instructions)
+    public ErrorManager errorManager;
+    
+    public ProgramInfo(
+        string[] globals, 
+        Dictionary<string, object?> globalVariables, 
+        Dictionary<string, FuncInfo> functions, 
+        Instruction[] instructions,
+        ErrorManager errorManager
+    )
     {
         this.globals = globals;
         this.globalVariables = globalVariables;
         this.functions = functions;
         this.instructions = instructions;
+        this.errorManager = errorManager;
     }
 }
 
@@ -135,10 +152,7 @@ public struct FuncInfo
 public class Parser
 {
     private Lexer lexer;
-    public bool hadError {
-        get;
-        private set;
-    }
+    public bool HadError => errorManager.HadError;
 
     private List<Instruction> instructions = new();
     private Dictionary<string, FuncInfo> functions = new()
@@ -180,15 +194,15 @@ public class Parser
     private List<List<string>> scopes = new();
     private int totalVariables = 0;
 
-    private List<string> accessedGlobals = new();
-
     private Token Current;
     private Token Previous;
 
+    private ErrorManager errorManager;
+
     public Parser(string code)
     {
-        lexer = new Lexer(code);
-        hadError = false;
+        errorManager = new();
+        lexer = new Lexer(code, errorManager);
     }
 
     private void Advance()
@@ -212,8 +226,7 @@ public class Parser
     {
         if (!Match(type))
         {
-            // raise error
-            LoggingUtilities.VerboseLog("ERROR! " + errorMessage);
+            Error(Current, errorMessage);
             Advance();
         }
     }
@@ -236,20 +249,25 @@ public class Parser
                     Function();
                     break;
                 case TokenType.KeywordVar:
-                    // raise error
-                    LoggingUtilities.VerboseLog("ERROR! Global variables must all appear at the beginning, before any function definitions.");
+                    Error(Current, "Global variables must all appear at the beginning of a script, before any function definitions.");
+                    Advance();
                     break;
                 default:
-                    LoggingUtilities.VerboseLog("ERROR! Expected function definition. No statements can be outside of functions.");
+                    Error(Current, "Expected function definition. No statements can be outside of functions.");
+                    Advance();
                     break;
             }
         }
+
+        if (HadError)
+            return null;
 
         return new ProgramInfo(
             new string[] { "main" },
             new(),
             functions,
-            instructions.ToArray()
+            instructions.ToArray(),
+            errorManager
         );
         /*
         Token token;
@@ -323,11 +341,68 @@ public class Parser
         */
     }
 
-    private void Add(Opcode op, object? operand=null)
+    private void Add(Opcode op, object? operand=null, int lineIdx=-1)
     {
         if (op == Opcode.POP && operand != null && (int)operand == 0) return;
 
-        instructions.Add(new Instruction(op, operand));
+        // this code checks if an operation between two literals is being performed so that it can pre-evaluate the result.
+        if (instructions.Count > 1 && instructions[instructions.Count - 1].op == Opcode.PUSH &&
+            instructions[instructions.Count - 2].op == Opcode.PUSH) {
+
+            object? returnValue = null;
+            switch (op)
+            {
+                case Opcode.ADD:
+                case Opcode.SUB:
+                case Opcode.MULT:
+                case Opcode.DIV:
+                case Opcode.GRT:
+                case Opcode.LSS:
+                    VM.suppressRuntimeErrors = true;
+                    VM.Reset();
+                    var info = new ProgramInfo(); // we can just create a dummy info struct, bc we know we won't need it
+                    VM.RunInstruction(instructions[instructions.Count - 2], info);
+                    VM.RunInstruction(instructions[instructions.Count - 1], info);
+                    VM.RunInstruction(new Instruction(op, null), info);
+                    VM.suppressRuntimeErrors = false;
+                    if (!VM.HadError)
+                    {
+                        returnValue = VM.PeekStackTop();
+                        instructions.RemoveAt(instructions.Count - 1);
+                        instructions[instructions.Count - 1] = new Instruction(Opcode.PUSH, returnValue, instructions[instructions.Count - 1].lineIdx);
+                        VM.suppressRuntimeErrors = false;
+                        return;
+                    }
+                    else
+                    {
+                        Error(Current, "Invalid operation between types.");
+                        LoggingUtilities.VerboseLog("ERROR! Invalid operation between types");
+                        return;
+                    }
+
+                default:
+                    break;
+            }
+        }
+        else if (instructions.Count > 0 && instructions[instructions.Count - 1].op == Opcode.PUSH)
+        {
+            if (op == Opcode.INV)
+            {
+                Instruction ins = instructions[instructions.Count - 1];
+                if (ins.operand.GetType() != typeof(bool))
+                {
+                    Error(Current, "Cannot invert non boolean type.");
+                    return;
+                }
+                instructions[instructions.Count - 1] = new Instruction(Opcode.PUSH, !(bool)ins.operand, ins.lineIdx);
+                return;
+            }
+        }
+
+        if (lineIdx == -1)
+            lineIdx = Previous.lineIdx;
+
+        instructions.Add(new Instruction(op, operand, lineIdx));
     }
 
     private void GlobalVarDef()
@@ -352,8 +427,7 @@ public class Parser
 
         if (!globalVariables.Add(id))
         {
-            // raise error
-            LoggingUtilities.VerboseLog("ERROR! Global var with that name already exists");
+            Error(Current, $"A global variable with the name '{id}' already exists.");
         }
     }
 
@@ -365,12 +439,11 @@ public class Parser
         int arity = 0;
 
         string id = Current.lexeme;
-        Consume(TokenType.Identifier, "ERROR! Expected identifier. Functions can't start with a capital letter.");
+        Consume(TokenType.Identifier, "Expected identifier. Functions can't start with a capital letter.");
 
         if (functions.ContainsKey(id))
         {
-            // raise error
-            LoggingUtilities.VerboseLog("Function with this name already exists!");
+            Error(Current, $"A function with the name '{id}' already exists.");
         }
 
         IncScope();
@@ -465,10 +538,11 @@ public class Parser
         Consume(TokenType.KeywordIn, "Expected 'in'. For loop syntax: for [variable name] in [expression] { ... }");
 
         // enumerator
+        Token tokBeforeExpression = Current;
         Expression();
 
         Add(Opcode.PREPCALL);
-        Add(Opcode.EXT_INST_CALL, "GetEnumerator"); // get the enumerator
+        Add(Opcode.EXT_INST_CALL, "GetEnumerator", tokBeforeExpression.lineIdx); // get the enumerator
 
         // the enumerator now sits in $'s position
 
@@ -490,6 +564,7 @@ public class Parser
 
         // now we do the loop body
         Loop(loopStart, jumpToEnd);
+
         DecScope();
     }
 
@@ -506,59 +581,72 @@ public class Parser
         Loop(loopStart, jumpToEnd);
     }
 
-    int currentLoopStart = -1;
-    bool inLoop = false;
+    bool inLoop => currentLoopStart != -1;
     Stack<int> breaksToPatch = new();
+    int currentLoopStart = -1;
+    int currentLoopScope = -1;
     private void Loop(int loopStart, int jumpToEnd)
     {
-        int tempLoopStartStore = currentLoopStart;
-        bool tempInLoopStore = inLoop;
+        int tempLoopStart = currentLoopStart;
         currentLoopStart = loopStart;
-        inLoop = true;
+        int tempLoopScope = currentLoopScope;
+        currentLoopScope = scopes.Count - 1;
 
         int breaksStart = breaksToPatch.Count;
-
+        
         Block(false);
+
         Add(Opcode.JMP, loopStart);
         PatchJump(jumpToEnd);
 
         for (int i = breaksStart; i < breaksToPatch.Count; ++i)
             PatchJump(breaksToPatch.Pop());
 
-        currentLoopStart = tempLoopStartStore;
-        inLoop = tempInLoopStore;
+        currentLoopStart = tempLoopStart;
+        currentLoopScope = tempLoopScope;
     }
 
     private void Break()
     {
-        Advance();
         if (!inLoop)
         {
-            // raise error
-            LoggingUtilities.VerboseLog("ERROR! Can't use 'break' while outside of a loop");
+            Error(Current, "Can't use 'break' outside of a loop.");
         }
+        Advance();
         Consume(TokenType.SemiColon, "Expected ';'");
+        DescopeUntil(currentLoopScope);
         breaksToPatch.Push(instructions.Count);
         Add(Opcode.JMP);
     }
     private void Continue()
     {
-        Advance();
         if (!inLoop)
         {
-            // raise error
-            LoggingUtilities.VerboseLog("ERROR! Can't use 'continue' while outside of a loop");
+            Error(Current, "Can't use 'continue' outside of a loop.");
         }
+        Advance();
         Consume(TokenType.SemiColon, "Expected ';'");
+        DescopeUntil(currentLoopScope);
         Add(Opcode.JMP, currentLoopStart);
+    }
+    
+    private void DescopeUntil(int scopeIndex)
+    {
+        int totalLoss = 0;
+
+        for (int i = scopeIndex; i < scopes.Count; ++i)
+            totalLoss += scopes[i].Count;
+
+        Add(Opcode.POP, totalLoss);
     }
 
     private void If()
     {
         Advance(); // pass over if
+        var tokBeforeExpr = Current;
         Expression(); // expression to evaluate
         int jumpToElse = instructions.Count;
-        Add(Opcode.JFZ);
+        Add(Opcode.JFZ, lineIdx: tokBeforeExpr.lineIdx);
 
         Block(); // if body
 
@@ -610,10 +698,9 @@ public class Parser
                 Consume(TokenType.ClosedParenthesis, "Expected ')'");
                 break;
 
-            case TokenType.Minus: {
+            case TokenType.Minus: 
                 ParsePrefixMinus(precedenceTable[TokenType.Bang]); // we don't have infix and prefix precedence distinction
                 break;
-            }
 
             case TokenType.ClassIdentifier:
                 // didn't actually fail yet but this is flagged so that we can see if HandleColon was called
@@ -625,9 +712,9 @@ public class Parser
                 HandleIdentifier();
                 break;
 
-            case TokenType.OpenCurlyBracket:
+            case TokenType.OpenSquareBracket:
                 Advance();
-                ParseArguments(TokenType.ClosedCurlyBracket);
+                ParseArguments(TokenType.ClosedSquareBracket);
                 Add(Opcode.CRTARR);
                 break;
 
@@ -635,8 +722,12 @@ public class Parser
             case TokenType.Integer:
                 Add(Opcode.PUSH, int.Parse(Current.lexeme));
                 Advance();
-
                 break;
+
+            case TokenType.KeywordNew:
+                HandleCtor();
+                break;
+
             case TokenType.Float:
                 if (floatCulture == null)
                 {
@@ -653,8 +744,7 @@ public class Parser
                 break;
 
             default:
-                // raise error
-                LoggingUtilities.VerboseLog("ERROR! Unexpected token");
+                Error(Current, "Unexpected token.");
                 Advance();
                 break;
         }
@@ -673,8 +763,9 @@ public class Parser
     private void ParseInvert(int precedence)
     {
         Advance();
+        var tokBeforeExpr = Current;
         ParsePrecedence(precedence);
-        Add(Opcode.INV);
+        Add(Opcode.INV, lineIdx: tokBeforeExpr.lineIdx);
     }
 
     private void ParsePrefixMinus(int precedence)
@@ -702,17 +793,11 @@ public class Parser
             }
         }
 
-        if (scopes.Count > 0 && !globalVariables.Contains(name))
+        if (!globalVariables.Contains(name))
         {
-            // raise error
-            LoggingUtilities.VerboseLog("ERROR! No variable found!");
-            return -1;
+            Error(Current, $"No variable with the name '{name}' was found. Are you sure it is still in scope?");
         }
 
-        // if we can't find a local variable it must be a global
-
-        // add it to a list, so that we can check at the end if all of the global values used were defined
-        accessedGlobals.Add(name);
         return -1;
     }
 
@@ -801,8 +886,8 @@ public class Parser
 
             if (failedToHandleStatic)
             {
-                // raise error
-                LoggingUtilities.VerboseLog("ERROR!");
+                Error(Previous, "Expected ':' after class identifier. Class identifiers can't stand alone." + 
+                    "You must either use a static field, or a call a static method.");
             }
 
             if (!precedenceTable.ContainsKey(Current.type))
@@ -822,23 +907,25 @@ public class Parser
     };
     private void HandleOp(int currentTokenPrecedence)
     {
+
         Opcode op = operatorOpcodes[Current.type];
         Advance();
         Instruction instructionToAdd = new Instruction();
         bool addIns = false;
         if (Current.type == TokenType.Equals)
         {
-            Advance();
+            currentTokenPrecedence = 0;
             addIns = true;
             Instruction last = instructions.Last();
             if (!variablePushToSet.ContainsKey(last.op))
             {
-                // raise error
-                LoggingUtilities.VerboseLog("ERROR! Invalid '=' operation");
+                Error(Current, "Invalid left hand side for an '=' operator.");
             }
-            else {
+            else 
+            {
                 instructionToAdd = new Instruction(variablePushToSet[last.op], last.operand);
             }
+            Advance();
 
         }
         ParsePrecedence(currentTokenPrecedence + 1);
@@ -877,6 +964,7 @@ public class Parser
         Token prevToken = Previous;
 
         Advance();
+        var idTok = Current;
         string methodOrFieldName = GetAnyId();
         bool isStatic = false;
 
@@ -891,7 +979,7 @@ public class Parser
         {
             Advance();
             ParseArguments(TokenType.ClosedParenthesis);
-            Add(isStatic ? Opcode.EXT_STATIC_CALL : Opcode.EXT_INST_CALL, methodOrFieldName);
+            Add(isStatic ? Opcode.EXT_STATIC_CALL : Opcode.EXT_INST_CALL, methodOrFieldName, idTok.lineIdx);
         }
         else
         {
@@ -899,15 +987,21 @@ public class Parser
             {
                 Advance();
                 ParsePrecedence(0);
-                Add(isStatic ? Opcode.SET_STATIC_FIELD : Opcode.SET_INST_FIELD, methodOrFieldName);
+                Add(isStatic ? Opcode.SET_STATIC_FIELD : Opcode.SET_INST_FIELD, methodOrFieldName, idTok.lineIdx);
             }
             else
             {
-                Add(isStatic ? Opcode.PUSH_STATIC_FIELD : Opcode.PUSH_INST_FIELD, methodOrFieldName);
+                Add(isStatic ? Opcode.PUSH_STATIC_FIELD : Opcode.PUSH_INST_FIELD, methodOrFieldName, idTok.lineIdx);
             }
         }
     }
 
+    private static Dictionary<TokenType, char> endTokenToChar = new()
+    {
+        { TokenType.ClosedCurlyBracket, '}' },
+        { TokenType.ClosedSquareBracket, ']' },
+        { TokenType.ClosedParenthesis, ')' }
+    };
     private void ParseArguments(TokenType endToken)
     {
         Add(Opcode.PREPCALL);
@@ -916,9 +1010,9 @@ public class Parser
             Expression();
             if (Current.type == endToken)
                 break;
-            Consume(TokenType.Comma, "Expected comma");
+            Consume(TokenType.Comma, "Expected ','");
         }
-        Consume(endToken, "Expected " + endToken.ToString());
+        Consume(endToken, "Expected '" + endTokenToChar[endToken] + "'");
     }
 
     private void HandleIdentifier()
@@ -958,10 +1052,9 @@ public class Parser
         }
 
     }
-
-    
     private void HandleSubscript()
     {
+        var tokBeforeExpr = Current;
         Advance();
         Expression(); // index
         Consume(TokenType.ClosedSquareBracket, "Expected ']'");
@@ -969,9 +1062,29 @@ public class Parser
         if (Current.type == TokenType.Equals)
         {
             ParsePrecedence(0);
-            Add(Opcode.SETARR);
+            Add(Opcode.SETARR, lineIdx: tokBeforeExpr.lineIdx);
         }
         else
-            Add(Opcode.PUSHARR);
+            Add(Opcode.PUSHARR, lineIdx: tokBeforeExpr.lineIdx);
+    }
+
+    private void HandleCtor()
+    {
+        Advance(); // past new
+        var id = Current;
+        Consume(TokenType.ClassIdentifier, "Expected class name.");
+
+        Add(Opcode.PREPCALL);
+        Consume(TokenType.OpenParenthesis, "Expected '(' after class name. Create new classes with: new ClassName(arg1,arg2,arg3)");
+
+        ParseArguments(TokenType.ClosedParenthesis);
+
+        Add(Opcode.EXT_CTOR, id.lexeme, id.lineIdx);
+    }
+
+    private void Error(Token token, string message)
+    {
+        if (token.type == TokenType.Error) return;
+        errorManager.RaiseSyntaxError(token.lineIdx, token.charIdx, message);
     }
 }
