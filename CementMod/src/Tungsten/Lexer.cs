@@ -203,37 +203,45 @@ public class Lexer
                 tok = Token(TokenType.ClosedCurlyBracket);
                 break;
             case '=':
+                tok = Token(TokenType.Equals);
+                Advance();
                 if (Match('='))
                 {
                     tok = Token(TokenType.DoubleEquals);
-                    break;
+                    Advance();
+                    return tok;
                 }
-                tok = Token(TokenType.Equals);
-                break;
+                return tok;
             case '>':
+                tok = Token(TokenType.Greater);
+                Advance();
                 if (Match('='))
                 {
                     tok = Token(TokenType.GreaterEquals);
-                    break;
+                    Advance();
+                    return tok;
                 }
-                tok = Token(TokenType.Greater);
-                break;
+                return tok;
             case '<':
+                tok = Token(TokenType.Less);
+                Advance();
                 if (Match('='))
                 {
                     tok = Token(TokenType.LessEquals);
-                    break;
+                    Advance();
+                    return tok;
                 }
-                tok = Token(TokenType.Less);
-                break;
+                return tok;
             case '!':
+                tok = Token(TokenType.Bang);
+                Advance();
                 if (Match('='))
                 {
                     tok = Token(TokenType.BangEquals);
-                    break;
+                    Advance();
+                    return tok;
                 }
-                tok = Token(TokenType.Bang);
-                break;
+                return tok;
             case ',':
                 tok = Token(TokenType.Comma);
                 break;
