@@ -47,6 +47,37 @@ public static class VM
         return stack.Peek();
     }
 
+    private static int CompareAssemblies(Assembly a1, Assembly a2)
+    {
+        bool a1ContainsUnity = a1.FullName.Contains("Unity");
+        bool a2ContainsUnity = a2.FullName.Contains("Unity");
+
+        if (a1ContainsUnity && a2ContainsUnity)
+            return 0;
+
+        if (a1ContainsUnity)
+            return -1;
+
+        if (a2ContainsUnity)
+            return 1;
+
+        return 0;
+    }
+
+    private static Assembly[] _sortedAssemblies = null;
+    private static Assembly[] SortedAssemblies
+    {
+        get
+        {
+            if (_sortedAssemblies == null)
+            {
+                _sortedAssemblies = AppDomain.CurrentDomain.GetAssemblies();
+                Array.Sort(_sortedAssemblies, CompareAssemblies);
+            }
+            return _sortedAssemblies;
+        }
+    }
+    
     public static object? RunFunction(ProgramInfo info, string functionName, params object?[] args)
     {
         Reset();
@@ -861,7 +892,7 @@ public static class VM
         if (_nameToTypeCache.ContainsKey(name))
             return _nameToTypeCache[name];
 
-        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+        foreach (Assembly assembly in SortedAssemblies)
             foreach (Type type in assembly.GetTypes())
                 if (type.Name == name || type.FullName == name)
                 {
