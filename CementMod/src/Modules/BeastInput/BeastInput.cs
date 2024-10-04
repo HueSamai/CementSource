@@ -79,8 +79,7 @@ public class BeastInput : MonoBehaviour
         foreach (Actor actor in Actor.CachedActors)
         {
             var devices = GetDevicesFor(actor);
-            if (devices.Length > 1 &&
-                (devices[0].GetType() == typeof(Keyboard) || devices[1].GetType() == typeof(Keyboard)))
+            if (devices.Length > 1)
             {
                 _cachedKeyboardActor = actor;
                 break;

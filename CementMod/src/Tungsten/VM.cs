@@ -407,7 +407,7 @@ public static class VM
                     if ((int)a % (int)b == 0)
                         stack.Push((int)a / (int)b);
                     else
-                        stack.Push((float)a / (float)b);
+                        stack.Push(Convert.ToSingle(a) / Convert.ToSingle(b));
 
                 else if ((a.GetType() == typeof(int) && b.GetType() == typeof(float)) || (a.GetType() == typeof(float) && b.GetType() == typeof(int)))
                     stack.Push(Convert.ToSingle(a) / Convert.ToSingle(b));
