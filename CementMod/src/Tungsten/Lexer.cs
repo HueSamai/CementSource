@@ -185,7 +185,15 @@ public class Lexer
                 break;
             case '/':
                 tok = Token(TokenType.ForwardSlash);
-                break;
+                Advance();
+                if (Match('/'))
+                { 
+                    while (!IsEnd && Current != '\n')
+                        Advance();
+
+                    return Next();
+                }
+                return tok;
             case '(':
                 tok = Token(TokenType.OpenParenthesis);
                 break;
