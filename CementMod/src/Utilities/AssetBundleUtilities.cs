@@ -53,6 +53,20 @@ public static class AssetBundleUtilities
         }));
     }
 
+    public static void LoadAllAssetsPersistentAsync<T>(this AssetBundle bundle, Action<T> onLoaded) where T : UnityEngine.Object
+    {
+        var request = bundle.LoadAllAssetsAsync<T>();
+
+        request.add_completed((Il2CppSystem.Action<AsyncOperation>)new Action<AsyncOperation>((a) =>
+        {
+            if (request.asset == null) return;
+            var result = request.asset.TryCast<T>();
+            if (result == null) return;
+            result.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            onLoaded?.Invoke(result);
+        }));
+    }
+
     /// <summary>
     /// Loads an AssetBundle from an assembly that has it embedded. 
     /// Good for keeping mods small and single-filed. 
