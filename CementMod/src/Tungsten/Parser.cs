@@ -115,13 +115,18 @@ public struct Instruction
     }
 }
 
-public struct ProgramInfo
+public class ProgramInfo
 {
-    public string[] globals;
+    public string[] globals { get; private set; }
     public Dictionary<string, object?> globalVariables;
-    public Dictionary<string, FuncInfo> functions;
-    public Instruction[] instructions;
-    public ErrorManager errorManager;
+    public Dictionary<string, FuncInfo> functions { get; private set; }
+    public Instruction[] instructions { get; private set; }
+    public ErrorManager errorManager { get; private set; }
+    
+    public ProgramInfo()
+    {
+
+    }
     
     public ProgramInfo(
         string[] globals, 
@@ -136,6 +141,17 @@ public struct ProgramInfo
         this.functions = functions;
         this.instructions = instructions;
         this.errorManager = errorManager;
+    }
+
+    public ProgramInfo Clone()
+    {
+        return new ProgramInfo(
+            globals,
+            new(),
+            functions,
+            instructions,
+            errorManager
+        );
     }
 }
 

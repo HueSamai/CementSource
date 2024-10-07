@@ -1,19 +1,55 @@
 ﻿using MelonLoader;
+using System.Collections.Generic;
 
 namespace Tungsten;
 public class Script
 {
     public bool faultyScript { get; private set; }
-    private ProgramInfo? programInfo;
+    public string name { get; private set; }
+    private ProgramInfo programInfo;
 
-    public Script(string code)
+    private static Dictionary<string, ProgramInfo> scriptNameToProgramInfo = new();
+    
+    public Script(string name, string code)
     {
-        Parser parser = new(code);
-        programInfo = parser.Parse();
+        this.name = name;
 
-        faultyScript = parser.HadError;
+        if (scriptNameToProgramInfo.ContainsKey(name))
+        {
+            programInfo = scriptNameToProgramInfo[name] != null ? scriptNameToProgramInfo[name].Clone() : null;
+        } 
+        else
+        {
+            Parser parser = new(code);
+            programInfo = parser.Parse();
+            scriptNameToProgramInfo[name] = programInfo;
 
-        RunFunction("__regglobal");
+            this.name = name;
+            faultyScript = programInfo == null ? true : programInfo.errorManager.HadError;
+        }
+
+        if (programInfo != null)
+            RunFunction("__regglobal");
+    }
+
+    public static Script TryGetExisting(string name)
+    {
+        if (scriptNameToProgramInfo.ContainsKey(name))
+        {
+            return new Script(name, "");
+        }
+        return null;
+    }
+
+    public bool HasFunction(string functionName)
+    {
+        return programInfo.functions.ContainsKey(functionName);
+    }
+
+    public int GetFunctionArity(string functionName)
+    {
+        if (!HasFunction(functionName)) return -1;
+        return programInfo.functions[functionName].arity;
     }
 
     public object? RunFunction(string functionName, params object?[] args)
