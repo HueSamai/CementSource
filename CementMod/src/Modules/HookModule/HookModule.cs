@@ -18,7 +18,7 @@ public static class HookModule
     {
         public MethodInfo original;
         public MethodInfo hook;
-        public MelonMod? callingMod;
+        public MelonMod callingMod;
         public bool isPrefix;
 
         /// <summary>
@@ -28,7 +28,7 @@ public static class HookModule
         /// <param name="callingMod">The mod making this patch. Used to toggle the patch on/off with the mod.</param>
         /// <param name="hook">The method containing the code to insert before or after the <paramref name="original"/> method.</param>
         /// <param name="isPrefix">Decides when the code will run: <c>true</c> if you want the code to run before the original, <c>false</c> if you want it to run after. Typically to guarantee other mod compatibility, you want to prefer running your code after the base game.</param>
-        public CementHook(MethodInfo original, MethodInfo hook, bool isPrefix, MelonMod? callingMod = null) : this()
+        public CementHook(MethodInfo original, MethodInfo hook, bool isPrefix, MelonMod callingMod = null) : this()
         {
             this.original = original;
             this.callingMod = callingMod;
@@ -50,8 +50,8 @@ public static class HookModule
             return true;
         };
 
-        HarmonyMethod? prefix = hook.isPrefix ? new HarmonyMethod(hook.hook) : null;
-        HarmonyMethod? postfix = hook.isPrefix ? null : new HarmonyMethod(hook.hook);
+        HarmonyMethod prefix = hook.isPrefix ? new HarmonyMethod(hook.hook) : null;
+        HarmonyMethod postfix = hook.isPrefix ? null : new HarmonyMethod(hook.hook);
 
         HarmonyMethod beforeEitherFix = new(doBeforeHook.Method);
 
@@ -61,6 +61,9 @@ public static class HookModule
         if (canToggle)
             harmonyInstance.Patch(hook.hook, beforeEitherFix);
 
-        Melon<Mod>.Logger.Msg($"New {(hook.isPrefix ? "PREFIX" : "POSTFIX")} hook on {hook.original.DeclaringType?.Name}.{hook.original.Name} registered to {hook.hook.DeclaringType?.Name}.{hook.hook.Name} with {typeof(HarmonyLib.Harmony)} instance {harmonyInstance.Id}");
+        var resultString = $"New {(hook.isPrefix ? "PREFIX" : "POSTFIX")} hook on {hook.original.DeclaringType?.Name}.{hook.original.Name} registered to {hook.hook.DeclaringType?.Name}.{hook.hook.Name} with {typeof(HarmonyLib.Harmony)} instance {harmonyInstance.Id}";
+        var fromModString = $"{resultString} from mod assembly {hook.callingMod.MelonAssembly.Assembly.FullName}";
+
+        Melon<Mod>.Logger.Msg(hook.callingMod is null ? resultString : fromModString);
     }
 }

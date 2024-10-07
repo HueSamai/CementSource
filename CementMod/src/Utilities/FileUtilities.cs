@@ -17,7 +17,7 @@ public static class FileUtilities
     /// <param name="resourceName">The embedded path to the file. Usually you can just use the path pseudo-relative to the solution directory separated by dots, e.g. ExampleMod/Assets/text.txt ExampleMod.Assets.text.txt</param>
     /// <returns>The text the file contains.</returns>
     /// <exception cref="Exception"></exception>
-    public static string? ReadEmbeddedText(Assembly assembly, string resourceName)
+    public static string ReadEmbeddedText(Assembly assembly, string resourceName)
     {
         assembly ??= Assembly.GetCallingAssembly();
 

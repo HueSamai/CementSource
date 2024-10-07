@@ -40,8 +40,8 @@ public class NetBeard : MonoBehaviour
 
     private static bool madeFromServer = false;
     private static bool madeFromClient = false;
-    private static readonly List<ushort> fromClientHandlers = new List<ushort>();
-    private static readonly List<ushort> fromServerHandlers = new List<ushort>();
+    private static readonly List<ushort> fromClientHandlers = new();
+    private static readonly List<ushort> fromServerHandlers = new();
 
     private static readonly Dictionary<string, Type> serverModIds = new();
     private static readonly Dictionary<string, Type> clientModIds = new();
@@ -166,7 +166,7 @@ public class NetBeard : MonoBehaviour
             {
                 foreach (MethodInfo method in type.GetMethods())
                 {
-                    HandleMessageFromServer? attribute = (HandleMessageFromServer?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromServer));
+                    HandleMessageFromServer attribute = (HandleMessageFromServer)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromServer));
                     if (attribute != null)
                     {
                         if (IsValidMethod(method))
@@ -199,7 +199,7 @@ public class NetBeard : MonoBehaviour
             {
                 foreach (MethodInfo method in type.GetMethods())
                 {
-                    HandleMessageFromClient? attribute = (HandleMessageFromClient?)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromClient));
+                    HandleMessageFromClient attribute = (HandleMessageFromClient)Attribute.GetCustomAttribute(method, typeof(HandleMessageFromClient));
                     if (attribute != null)
                     {
                         if (IsValidMethod(method))
@@ -230,7 +230,7 @@ public class NetBeard : MonoBehaviour
             LoggingUtilities.Logger.Error("Couldn't send a message to the server, because NetworkClient is not active.");
             return;
         }
-        NetworkWriter writer = new NetworkWriter();
+        NetworkWriter writer = new();
         writer.StartMessage((short)(msgCode + clientModOffsets[modId]));
         message.Serialize(writer);
         writer.FinishMessage();
@@ -244,7 +244,7 @@ public class NetBeard : MonoBehaviour
             LoggingUtilities.Logger.Error("Couldn't send the message to client, because NetworkServer is not active.");
             return;
         }
-        NetworkWriter writer = new NetworkWriter();
+        NetworkWriter writer = new();
         writer.StartMessage((short)msgCode);
         message.Serialize(writer);
         writer.FinishMessage();
@@ -268,7 +268,7 @@ public class NetBeard : MonoBehaviour
             LoggingUtilities.Logger.Error("Couldn't send message to clients, because NetworkServer is not active.");
             return;
         }
-        NetworkWriter writer = new NetworkWriter();
+        NetworkWriter writer = new();
         writer.StartMessage((short)(msgCode + serverModOffsets[modId]));
         message.Serialize(writer);
         writer.FinishMessage();

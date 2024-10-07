@@ -3,7 +3,6 @@ using Il2CppGB.Data;
 
 namespace CementGB.Mod.Patches;
 
-
 [HarmonyLib.HarmonyPatch(typeof(StringLoader), nameof(StringLoader.LoadString))]
 internal class LoadStringPatch
 {

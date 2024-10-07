@@ -14,11 +14,11 @@ namespace CementGB.Mod.Modules.BeastInput;
 [RegisterTypeInIl2Cpp]
 public class BeastInput : MonoBehaviour
 {
-    private static Actor? _cachedKeyboardActor = null;
-    private static Dictionary<string, Dictionary<Actor, bool>> _keyCombChecks = new();
-    private static Dictionary<string, List<Action<Actor>>> _keyCombCallbacks = new();
+    private static Actor _cachedKeyboardActor = null;
+    private static readonly Dictionary<string, Dictionary<Actor, bool>> _keyCombChecks = new();
+    private static readonly Dictionary<string, List<Action<Actor>>> _keyCombCallbacks = new();
 
-    public static Actor? KeyboardMouseBeast
+    public static Actor KeyboardMouseBeast
     {
         get
         {
@@ -45,7 +45,7 @@ public class BeastInput : MonoBehaviour
                 foreach (string keyCode in comb)
                 {
                     var devices = GetDevicesFor(actor);
-                    InputControl? control = null;
+                    InputControl control = null;
                     foreach (var device in devices)
                     {
                         control = device.TryGetChildControl(keyCode);
@@ -91,7 +91,7 @@ public class BeastInput : MonoBehaviour
     {
         string[] sortedKeyCodes = (string[]) keyCodes.Clone();
 
-        Il2CppStringArray strings = new Il2CppStringArray(sortedKeyCodes);
+        Il2CppStringArray strings = new(sortedKeyCodes);
         Array.Sort(strings);
         sortedKeyCodes = strings;
 
@@ -127,7 +127,7 @@ public class BeastInput : MonoBehaviour
             if (fallbackId == -1)
             {
                 LoggingUtilities.VerboseLog("[BEAST INPUT] Can't get devices for an invalid input player.");
-                return new InputDevice[0];
+                return System.Array.Empty<InputDevice>();
             }
 
             return UnityInputSystemManager.Instance.GetUser(fallbackId).pairedDevices.ToArray();
@@ -136,7 +136,7 @@ public class BeastInput : MonoBehaviour
         return actor.InputPlayer.pairedDevices.ToArray();
     }
 
-    public static T? GetDeviceFor<T>(Actor actor) where T : InputDevice
+    public static T GetDeviceFor<T>(Actor actor) where T : InputDevice
     {
         if (!actor.InputPlayer.valid)
         {

@@ -29,11 +29,11 @@ public class Pool : MonoBehaviour
     /// <summary>
     /// Dictionary that corresponds ids to actions
     /// </summary>
-    private static readonly Dictionary<int, Action<GameObject>?> resetActions = new();
+    private static readonly Dictionary<int, Action<GameObject>> resetActions = new();
 
     private void Awake()
     {
-        SceneManager.sceneLoaded += (Action<Scene, LoadSceneMode>)SceneChanged;
+        SceneManager.add_sceneLoaded((Action<Scene, LoadSceneMode>)SceneChanged);
     }
 
     private void SceneChanged(Scene _, LoadSceneMode __)
@@ -47,7 +47,7 @@ public class Pool : MonoBehaviour
     /// </summary>
     /// <param name="prefab"></param>
     /// <param name="reset"></param>
-    private static void BaseRegisterPrefab(GameObject prefab, Action<GameObject>? reset)
+    private static void BaseRegisterPrefab(GameObject prefab, Action<GameObject> reset)
     {
         // Checks if the prefab has already been registered
         if (objectToId.ContainsKey(prefab))
@@ -94,7 +94,7 @@ public class Pool : MonoBehaviour
         // Checks if the object was spawned with the pooling system
         if (!spawnedObjects.Contains(gameObject))
         {
-            Melon<CementGB.Mod.Mod>.Logger.Error("You can only pool objects spawned using the pooling system.");
+            Melon<Mod>.Logger.Error("You can only pool objects spawned using the pooling system.");
             return;
         }
 
@@ -111,19 +111,19 @@ public class Pool : MonoBehaviour
     /// </summary>
     /// <param name="prefab"></param>
     /// <returns></returns>
-    private static GameObject? BaseInstantiate(GameObject prefab)
+    private static GameObject BaseInstantiate(GameObject prefab)
     {
         // Checks if the prefab has been registered
         if (!objectToId.ContainsKey(prefab))
         {
-            Melon<CementGB.Mod.Mod>.Logger.Error("You need to register a prefab before you can spawn it.");
+            Melon<Mod>.Logger.Error("You need to register a prefab before you can spawn it.");
             return null;
         }
 
         int id = objectToId[prefab];
 
         // Finds a pooled object of the same prefab
-        GameObject? @object = GetPooledObject(id);
+        GameObject @object = GetPooledObject(id);
         if (@object == null)
         {
             @object = GameObject.Instantiate(prefab);
@@ -158,9 +158,9 @@ public class Pool : MonoBehaviour
     /// </summary>
     /// <param name="prefab"></param>
     /// <returns></returns>
-    public static GameObject? Instantiate(GameObject prefab)
+    public static GameObject Instantiate(GameObject prefab)
     {
-        GameObject? @object = BaseInstantiate(prefab);
+        GameObject @object = BaseInstantiate(prefab);
         if (@object == null) return null;
 
         // Resets object
@@ -177,9 +177,9 @@ public class Pool : MonoBehaviour
     /// <param name="prefab"></param>
     /// <param name="parent"></param>
     /// <returns></returns>
-    public static GameObject? Instantiate(GameObject prefab, Transform parent)
+    public static GameObject Instantiate(GameObject prefab, Transform parent)
     {
-        GameObject? @object = BaseInstantiate(prefab);
+        GameObject @object = BaseInstantiate(prefab);
         if (@object == null) return null;
 
         // Resets and sets values of object
@@ -197,9 +197,9 @@ public class Pool : MonoBehaviour
     /// <param name="prefab"></param>
     /// <param name="position"></param>
     /// <returns></returns>
-    public static GameObject? Instantiate(GameObject prefab, Vector3 position)
+    public static GameObject Instantiate(GameObject prefab, Vector3 position)
     {
-        GameObject? @object = BaseInstantiate(prefab);
+        GameObject @object = BaseInstantiate(prefab);
         if (@object == null) return null;
 
         // Resets and sets values of object
@@ -218,9 +218,9 @@ public class Pool : MonoBehaviour
     /// <param name="position"></param>
     /// <param name="rotation"></param>
     /// <returns></returns>
-    public static GameObject? Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
+    public static GameObject Instantiate(GameObject prefab, Vector3 position, Quaternion rotation)
     {
-        GameObject? @object = BaseInstantiate(prefab);
+        GameObject @object = BaseInstantiate(prefab);
         if (@object == null) return null;
 
         // Resets and sets values of object
@@ -237,7 +237,7 @@ public class Pool : MonoBehaviour
     /// </summary>
     /// <param name="id"></param>
     /// <returns></returns>
-    private static GameObject? GetPooledObject(int id)
+    private static GameObject GetPooledObject(int id)
     {
         foreach (GameObject pooledObject in pooledObjects)
         {

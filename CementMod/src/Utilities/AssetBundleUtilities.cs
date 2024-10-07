@@ -19,7 +19,7 @@ public static class AssetBundleUtilities
     /// <param name="bundle">The bundle to load the asset from.</param>
     /// <param name="name">The exact name of the asset to load.</param>
     /// <returns>The loaded asset with <c>hideFlags</c> set to <c>HideFlags.DontUnloadUnusedAsset</c></returns>
-    public static T? LoadPersistentAsset<T>(this AssetBundle bundle, string name) where T : UnityEngine.Object
+    public static T LoadPersistentAsset<T>(this AssetBundle bundle, string name) where T : UnityEngine.Object
     {
         var asset = bundle.LoadAsset(name);
 
@@ -39,11 +39,25 @@ public static class AssetBundleUtilities
     /// <param name="bundle">The bundle to load the asset from.</param>
     /// <param name="name">The exact name of the asset to load.</param>
     /// <param name="onLoaded">The callback to execute once the asset loads. Takes the loaded asset as a parameter.</param>
-    public static void LoadPersistentAssetAsync<T>(this AssetBundle bundle, string name, Action<T>? onLoaded) where T : UnityEngine.Object
+    public static void LoadPersistentAssetAsync<T>(this AssetBundle bundle, string name, Action<T> onLoaded) where T : UnityEngine.Object
     {
         var request = bundle.LoadAssetAsync<T>(name);
 
         request.add_completed((Il2CppSystem.Action<AsyncOperation>)((a) =>
+        {
+            if (request.asset == null) return;
+            var result = request.asset.TryCast<T>();
+            if (result == null) return;
+            result.hideFlags = HideFlags.DontUnloadUnusedAsset;
+            onLoaded?.Invoke(result);
+        }));
+    }
+
+    public static void LoadAllAssetsPersistentAsync<T>(this AssetBundle bundle, Action<T> onLoaded) where T : UnityEngine.Object
+    {
+        var request = bundle.LoadAllAssetsAsync<T>();
+
+        request.add_completed((Il2CppSystem.Action<AsyncOperation>)new Action<AsyncOperation>((a) =>
         {
             if (request.asset == null) return;
             var result = request.asset.TryCast<T>();
