@@ -31,7 +31,7 @@ public class ServerManager : MonoBehaviour
     {
         PlatformEvents.add_OnPlatformInitializedEvent(new Action(() => ServerBoot()));
 
-        Melon<Mod>.Logger.Msg("Setting up dedicated server overrides and initialization flags. . .");
+        Melon<Mod>.Logger.Msg("Setting up dedicated server overrides. . .");
         AudioListener.pause = IsServer;
         NetworkBootstrapper.IsDedicatedServer = IsServer;
         Melon<Mod>.Logger.Msg(ConsoleColor.Green, "Done!");
@@ -40,9 +40,10 @@ public class ServerManager : MonoBehaviour
     private void ServerBoot()
     {
         if (IsServer) UnityServicesManager.Instance.Initialise(UnityServicesManager.InitialiseFlags.DedicatedServer, null, "", "DGS");
-        
+
         LobbyManager.Instance.LobbyObject.AddComponent<DevelopmentTestServer>();
         FindObjectOfType<NetworkBootstrapper>().AutoRunServer = IsServer && !DontAutoStart;
+        Melon<Mod>.Logger.Msg("Added DevelopmentTestServer.");
 
         if (IsServer)
         {
