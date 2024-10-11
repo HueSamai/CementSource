@@ -18,7 +18,7 @@ public class ServerManager : MonoBehaviour
     public const int DEFAULT_PORT = 5999;
 
     public static bool DontAutoStart => Environment.GetCommandLineArgs().Contains("-DONT-AUTOSTART");
-    public static bool IsServer => Environment.GetCommandLineArgs().Contains("-Server");
+    public static bool IsServer => Environment.GetCommandLineArgs().Contains("-SERVER");
     public static bool IsAutoJoiner => !IsServer && (!string.IsNullOrWhiteSpace(_ip) || !string.IsNullOrWhiteSpace(_port));
     public static string IP => string.IsNullOrWhiteSpace(_ip) ? DEFAULT_IP : _ip;
     public static int Port => string.IsNullOrWhiteSpace(_port) ? DEFAULT_PORT : int.Parse(_port);
