@@ -23,7 +23,6 @@ public class ServerManager : MonoBehaviour
     public static string IP => string.IsNullOrWhiteSpace(_ip) ? DEFAULT_IP : _ip;
     public static int Port => string.IsNullOrWhiteSpace(_port) ? DEFAULT_PORT : int.Parse(_port);
 
-    // This isn't necessary but I'll keep it because I'll probably need it at some point
     private static readonly string _ip = CommandLineParser.Instance.GetValueForKey("-ip", false);
     private static readonly string _port = CommandLineParser.Instance.GetValueForKey("-port", false);
 
@@ -43,7 +42,7 @@ public class ServerManager : MonoBehaviour
 
         LobbyManager.Instance.LobbyObject.AddComponent<DevelopmentTestServer>();
         FindObjectOfType<NetworkBootstrapper>().AutoRunServer = IsServer && !DontAutoStart;
-        Melon<Mod>.Logger.Msg("Added DevelopmentTestServer.");
+        Melon<Mod>.Logger.Msg("Added DevelopmentTestServer and set AutoRunServer.");
 
         if (IsServer)
         {
