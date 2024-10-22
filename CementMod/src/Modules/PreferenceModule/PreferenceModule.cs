@@ -39,7 +39,7 @@ internal static class PreferenceModule
         var uiScreen = CreatePrefsScreen(isInGame);
         var uiButton = CreatePrefsButton(isInGame);
 
-        uiButton.onClick.AddListener(new Action(() =>
+        uiButton?.onClick.AddListener(new Action(() =>
         {
             var menu = GameObject.Find("Managers/Menu").GetComponent<MenuController>();
             menu?.PushScreen(uiScreen);
@@ -52,6 +52,11 @@ internal static class PreferenceModule
 
         LoggingUtilities.VerboseLog("Creating Menu screen for mod preferences. . .");
         var inputRoot = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Input Root");
+        if (inputRoot == null)
+        {
+            LoggingUtilities.VerboseLog(ConsoleColor.DarkYellow, "Could not find input controls menu. Menu screen not created.");
+            return null;
+        }
         var newMenu = Object.Instantiate(inputRoot, inputRoot.transform.parent, true);
         var emptyButton = newMenu.transform.Find("Reset All").GetComponent<Button>();
 
@@ -88,6 +93,11 @@ internal static class PreferenceModule
         LoggingUtilities.VerboseLog("Creating RootSettingsMenu preferences button. . .");
 
         var menu = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings");
+        if (menu == null)
+        {
+            LoggingUtilities.VerboseLog(ConsoleColor.DarkYellow, "Could not find root settings menu. Preferences button not created.");
+            return null;
+        }
         var baseButton = menu.transform.Find("Audio");
         var newButtonObj = Object.Instantiate(baseButton, menu.transform, true);
 
