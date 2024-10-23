@@ -19,7 +19,7 @@ public static class AddressableUtilities
     /// Fires when a modded addressable catalog is registered into the game, after its keys are added to <see cref="PackAddressableKeys"/>.
     /// Takes the catalog path as a parameter.
     /// </summary>
-    public static event Action<string>? OnModdedAddressableCatalogLoaded;
+    public static event Action<string> OnModdedAddressableCatalogLoaded;
 
     /// <summary>
     /// Creates an AssetReference with a new Guid referring to the passed Addressable key. The key does not need to refer to a modded addressable, however this method is designed for that purpose.

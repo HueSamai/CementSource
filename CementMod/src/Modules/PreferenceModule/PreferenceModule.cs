@@ -38,7 +38,7 @@ internal static class PreferenceModule
     {
         if (sceneName != "Menu")
         {
-            // TODO: Create in-game live prefs menu
+            CreateMenuPrefsUI(true);
             return;
         }
 
@@ -97,22 +97,29 @@ internal static class PreferenceModule
         }
     }
 
-
-    private static void CreateMenuPrefsUI()
+    private static void CreateMenuPrefsUI(bool isInGame=false)
     {
-        var uiScreen = CreatePrefsMenuScreen();
-        var uiButton = CreatePrefsMenuEnterButton();
+        var uiScreen = CreatePrefsScreen(isInGame);
+        var uiButton = CreatePrefsButton(isInGame);
 
-        uiButton.onClick.AddListener(new Action(() =>
+        uiButton?.onClick.AddListener(new Action(() =>
         {
             var menu = GameObject.Find("Managers/Menu").GetComponent<MenuController>();
             menu?.PushScreen(uiScreen);
         }));
     }
 
-    private static BaseMenuScreen CreatePrefsMenuScreen()
+    private static BaseMenuScreen CreatePrefsScreen(bool isInGame=false)
     {
+        // TODO: Look for in-game menu & create in-game live prefs menu instead if isInGame is true
+
+        LoggingUtilities.VerboseLog("Creating Menu screen for mod preferences. . .");
         var inputRoot = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Input Root");
+        if (inputRoot == null)
+        {
+            LoggingUtilities.VerboseLog(ConsoleColor.DarkYellow, "Could not find input controls menu. Menu screen not created.");
+            return null;
+        }
         var newMenu = Object.Instantiate(inputRoot, inputRoot.transform.parent, true);
         var emptyButton = newMenu.transform.Find("Reset All").GetComponent<Button>();
 
@@ -134,12 +141,13 @@ internal static class PreferenceModule
         menuScreen.defaultSelection = emptyButton;
         menuScreen.defaultSelectionFallback = emptyButton;
 
-        //menuScreen.cancelEvent = new BaseMenuScreen.CancelEvent();
+        // menuScreen.cancelEvent = new BaseMenuScreen.CancelEvent();
         menuScreen.cancelEvent.AddListener(new Action(() =>
         {
             var menu = GameObject.Find("Managers/Menu").GetComponent<MenuController>();
             menu.PopScreen();
         }));
+        LoggingUtilities.VerboseLog(ConsoleColor.DarkGreen, "Done!");
 
         return menuScreen;
     }
@@ -196,12 +204,16 @@ internal static class PreferenceModule
         return null;
     }
 
-
-    private static Button CreatePrefsMenuEnterButton()
+    private static Button CreatePrefsButton(bool isInGame=false)
     {
         LoggingUtilities.VerboseLog("Creating RootSettingsMenu preferences button. . .");
 
         var menu = GameObject.Find("Managers/Menu/Settings Menu/Canvas/Root Settings");
+        if (menu == null)
+        {
+            LoggingUtilities.VerboseLog(ConsoleColor.DarkYellow, "Could not find root settings menu. Preferences button not created.");
+            return null;
+        }
         var baseButton = menu.transform.Find("Audio");
         var newButtonObj = Object.Instantiate(baseButton, menu.transform, true);
 
@@ -221,6 +233,7 @@ internal static class PreferenceModule
 
         // remove all click events
         newButton.onClick = new Button.ButtonClickedEvent();
+        LoggingUtilities.VerboseLog(ConsoleColor.DarkGreen, "Done!");
         return newButton;
     }
 }

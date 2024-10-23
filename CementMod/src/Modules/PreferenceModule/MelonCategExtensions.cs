@@ -9,6 +9,6 @@ public static class MelonCategExtensions
     public static void SetLivePref(this MelonPreferences_Category category, bool value) 
         => isLivePref_Tracker[category] = value;
 
-    public static bool GetLivePref(this MelonPreferences_Category category)
+    public static bool IsLivePref(this MelonPreferences_Category category)
         => isLivePref_Tracker.ContainsKey(category) && isLivePref_Tracker[category];
 }

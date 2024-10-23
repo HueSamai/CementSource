@@ -43,14 +43,10 @@
 
   <ItemGroup>
     <EmbeddedResource Include="Assets\**\*" />
-	<EmbeddedResource Include="ref\MoonSharp\MoonSharp.Interpreter.dll" />
   </ItemGroup>
 
   <ItemGroup>
     <Reference Include="ref\**\*.dll"></Reference>
-    <Compile Remove="ref\MoonSharp\**" />
-    <EmbeddedResource Remove="ref\MoonSharp\**" />
-    <None Remove="ref\MoonSharp\**" />
 
     <!--
       Removing redundant references
