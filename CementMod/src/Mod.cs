@@ -7,6 +7,7 @@ using MelonLoader;
 using MelonLoader.Utils;
 using System.IO;
 using UnityEngine;
+using Tungsten;
 
 namespace CementGB.Mod;
 
@@ -68,6 +69,8 @@ public class Mod : MelonMod
 
         // Load custom content catalogs
         AddressableUtilities.LoadCCCatalogs();
+
+        Script.ReloadScripts();
     }
 
     /// <summary>
@@ -97,12 +100,19 @@ public class Mod : MelonMod
     public override void OnUpdate()
     {
         base.OnUpdate();
+        Script.Update();
+    }
+
+    public override void OnGUI()
+    {
+        Script.OnGUI();
     }
 
     private static void FileStructure()
     {
         Directory.CreateDirectory(userDataPath);
         Directory.CreateDirectory(customContentPath);
+        Directory.CreateDirectory(Script.scriptsPath);
     }
 
     private static void CreateCementComponents()

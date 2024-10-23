@@ -48,12 +48,16 @@
 
   <ItemGroup>
     <Reference Include="ref\**\*.dll"></Reference>
+    <Compile Remove="ref\MoonSharp\**" />
+    <EmbeddedResource Remove="ref\MoonSharp\**" />
+    <None Remove="ref\MoonSharp\**" />
 
     <!--
       Removing redundant references
     -->
     <Reference Remove="ref\**\System.*.dll"></Reference>
     <Reference Remove="ref\**\Microsoft.Win32.SystemEvents.dll"></Reference>
+    <Reference Remove="ref\MoonSharp\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -62,10 +66,6 @@
 
   <ItemGroup>
     <GameDirFile Include="..\game_dir.txt"></GameDirFile>
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="ref\MoonSharp\" />
   </ItemGroup>
 
   <Target Name="BeforeRestore" BeforeTargets="Restore">

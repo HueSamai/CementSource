@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using CementGB.Mod.Utilities;
 using MelonLoader;
 
 namespace Tungsten;
@@ -90,7 +91,7 @@ public class ErrorManager
             pointerLine += "^";
             errorMessage += pointerLine;
 
-            MelonLogger.Error(errorMessage);
+            LoggingUtilities.Logger.Error(errorMessage);
         }
     }
 
@@ -100,7 +101,7 @@ public class ErrorManager
 
         if (lineIdx < 0)
         {
-            MelonLogger.Error($"TungstenRuntimeError: {message}\n");
+            LoggingUtilities.Logger.Error($"TungstenRuntimeError: {message}\n");
             return;
         }
 
@@ -109,6 +110,6 @@ public class ErrorManager
 
         errorMessage += $"{lineIdx + 1} | {line}";
 
-        MelonLogger.Error(errorMessage);
+        LoggingUtilities.Logger.Error(errorMessage);
     }
 }

@@ -118,10 +118,12 @@ public struct Instruction
 public class ProgramInfo
 {
     public string[] globals { get; private set; }
-    public Dictionary<string, object?> globalVariables;
+    public Dictionary<string, object> globalVariables;
     public Dictionary<string, FuncInfo> functions { get; private set; }
     public Instruction[] instructions { get; private set; }
     public ErrorManager errorManager { get; private set; }
+
+    public bool isGlobal { get; private set; }
     
     public ProgramInfo()
     {
@@ -129,13 +131,15 @@ public class ProgramInfo
     }
     
     public ProgramInfo(
+        bool isGlobal,
         string[] globals, 
-        Dictionary<string, object?> globalVariables, 
+        Dictionary<string, object> globalVariables, 
         Dictionary<string, FuncInfo> functions, 
         Instruction[] instructions,
         ErrorManager errorManager
     )
     {
+        this.isGlobal = isGlobal;
         this.globals = globals;
         this.globalVariables = globalVariables;
         this.functions = functions;
@@ -146,6 +150,7 @@ public class ProgramInfo
     public ProgramInfo Clone()
     {
         return new ProgramInfo(
+            isGlobal,
             globals,
             new(),
             functions,
@@ -249,10 +254,14 @@ public class Parser
         }
     }
 
-    public ProgramInfo? Parse()
+    public ProgramInfo Parse()
     {
         Advance();
 
+        bool isGlobal = false;
+        if (Match(TokenType.GlobalDirective))
+            isGlobal = true;
+        
         while (Current.type == TokenType.KeywordVar)
             GlobalVarDef();
 
@@ -281,6 +290,7 @@ public class Parser
             return null;
 
         return new ProgramInfo(
+            isGlobal,
             new string[] { "main" },
             new(),
             functions,
@@ -359,7 +369,7 @@ public class Parser
         */
     }
 
-    private void Add(Opcode op, object? operand=null, int lineIdx=-1)
+    private void Add(Opcode op, object operand=null, int lineIdx=-1)
     {
         if (op == Opcode.POP && operand != null && (int)operand == 0) return;
 
@@ -367,7 +377,7 @@ public class Parser
         if (instructions.Count > 1 && instructions[instructions.Count - 1].op == Opcode.PUSH &&
             instructions[instructions.Count - 2].op == Opcode.PUSH) {
 
-            object? returnValue = null;
+            object returnValue = null;
             switch (op)
             {
                 case Opcode.ADD:
@@ -744,14 +754,17 @@ public class Parser
 
             case TokenType.KeywordTrue:
                 Add(Opcode.PUSH, true);
+                Advance();
                 break;
 
             case TokenType.KeywordFalse:
                 Add(Opcode.PUSH, false);
+                Advance();
                 break;
 
             case TokenType.KeywordNull:
                 Add(Opcode.PUSH, null);
+                Advance();
                 break;
 
             case TokenType.KeywordNew:

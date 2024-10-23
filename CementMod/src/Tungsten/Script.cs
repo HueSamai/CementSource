@@ -1,58 +1,157 @@
-﻿using MelonLoader;
+﻿using CementGB.Mod;
+using Il2Cpp;
+using Il2CppSystem;
+using Il2CppSystem.IO;
+using MelonLoader;
 using System.Collections.Generic;
+using UnityEngine.InputSystem;
 
 namespace Tungsten;
+
 public class Script
 {
+    public static readonly string scriptsPath = Path.Combine(Mod.userDataPath, "TungstenScripts");
+
     public bool faultyScript { get; private set; }
     public string name { get; private set; }
     private ProgramInfo programInfo;
 
-    private static Dictionary<string, ProgramInfo> scriptNameToProgramInfo = new();
+    private static Dictionary<string, ProgramInfo> scriptCache = new();
+    private static List<Script> _scripts = new List<Script>();
+    private static Dictionary<string, Script> _globalScripts = new();
+
+    public static Script[] Scripts => _scripts.ToArray();
+
+    public event System.Action OnReload;
     
-    public Script(string name, string code)
+    private Script(string name)
     {
         this.name = name;
-
-        if (scriptNameToProgramInfo.ContainsKey(name))
+        programInfo = null;
+        if (scriptCache[name] != null)
         {
-            programInfo = scriptNameToProgramInfo[name] != null ? scriptNameToProgramInfo[name].Clone() : null;
-        } 
-        else
-        {
-            Parser parser = new(code);
-            programInfo = parser.Parse();
-            scriptNameToProgramInfo[name] = programInfo;
-
-            this.name = name;
-            faultyScript = programInfo == null ? true : programInfo.errorManager.HadError;
+            programInfo = scriptCache[name].Clone();
         }
 
+        faultyScript = programInfo == null || programInfo.errorManager.HadError;
+
         if (programInfo != null)
-            RunFunction("__regglobal");
+            Run("__regglobal");
+
+        _scripts.Add(this);
     }
 
-    public static Script TryGetExisting(string name)
+    /// <summary>
+    /// Checks for the keybind to hot reload scripts, and also does the processing of global scripts.
+    /// </summary>
+    public static void Update()
     {
-        if (scriptNameToProgramInfo.ContainsKey(name))
+        if (Keyboard.current.ctrlKey.isPressed && Keyboard.current.shiftKey.isPressed && Keyboard.current.rKey.wasPressedThisFrame)
+            ReloadScripts();
+
+        foreach (Script global in _globalScripts.Values)
+            if (global.HasFunction("update"))
+                global.Run("update");
+    }
+
+    /// <summary>
+    /// Runs OnGUI for all global scripts.
+    /// </summary>
+    public static void OnGUI()
+    {
+        foreach (Script global in _globalScripts.Values)
+            if (global.HasFunction("onGUI"))
+                global.Run("onGUI");
+    }
+
+    /// <summary>
+    /// Used to load and hot reload scripts.
+    /// </summary>
+    public static void ReloadScripts()
+    {
+        LoadScriptsRecursive(scriptsPath);
+
+        foreach (Script script in _scripts)
         {
-            return new Script(name, "");
+            // here we technically make override new global scripts, but i can't think of a better way to do it so...
+            script.programInfo = scriptCache[script.name].Clone();
+
+            script.faultyScript = script.programInfo == null || script.programInfo.errorManager.HadError;
+            script.Run("__regglobal");
+
+            if (script.OnReload != null)
+                script.OnReload();
+
+            if (!script.faultyScript && script.programInfo.isGlobal && script.HasFunction("awake"))
+                script.Run("awake");
+        }
+    }
+
+    private static void LoadScriptsRecursive(string directory, string directoryAppend = "")
+    {
+        foreach (string scriptPath in Directory.GetFiles(directory, "*.w"))
+        {
+            var parser = new Parser(File.ReadAllText(scriptPath));
+            var programInfo = parser.Parse();
+            var scriptName = Path.Combine(directoryAppend, Path.GetFileName(scriptPath)).Replace('\\', '/');
+
+            scriptCache[scriptName] = programInfo;
+
+            if (programInfo != null && programInfo.isGlobal && !_globalScripts.ContainsKey(scriptName))
+                _globalScripts[scriptName] = new Script(scriptName);
+        }
+
+        foreach (string sub in Directory.GetDirectories(directory))
+            LoadScriptsRecursive(sub, Path.Combine(directoryAppend, sub));
+    }
+
+    /// <summary>
+    /// Get a new instance of the script with the input name.
+    /// </summary>
+    /// <param name="name">Name path of the script to create a new instance of.</param>
+    /// <returns></returns>
+    public static Script NewOf(string name)
+    {
+        if (scriptCache.ContainsKey(name))
+        {
+            if (scriptCache[name] != null && scriptCache[name].isGlobal)
+            {
+                VM.Error(-1, "Cannot create a copy of a global script. Remove '@global' directive in order to allow copies.");
+                return null;
+            }
+            return new Script(name);
         }
         return null;
     }
 
+    /// <summary>
+    /// Checks if a script has a function with the given name defined.
+    /// </summary>
+    /// <param name="functionName">The name to check for.</param>
+    /// <returns></returns>
     public bool HasFunction(string functionName)
     {
         return programInfo.functions.ContainsKey(functionName);
     }
 
+    /// <summary>
+    /// Gets the number of parameters a function of the script takes. Returns -1, if the function isn't found.
+    /// </summary>
+    /// <param name="functionName">The name of the function to check the arity of.</param>
+    /// <returns></returns>
     public int GetFunctionArity(string functionName)
     {
         if (!HasFunction(functionName)) return -1;
         return programInfo.functions[functionName].arity;
     }
 
-    public object? RunFunction(string functionName, params object?[] args)
+    /// <summary>
+    /// Run a function on the script.
+    /// </summary>
+    /// <param name="functionName">The name of the function to run.</param>
+    /// <param name="args">A list of arguments to pass to the function.</param>
+    /// <returns></returns>
+    public object Run(string functionName, params object?[] args)
     {
         if (programInfo == null)
         {

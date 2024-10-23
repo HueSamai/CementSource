@@ -1,5 +1,8 @@
 ﻿using CementGB.Mod.Utilities;
+using Il2Cpp;
+using Il2CppGB.Misc;
 using Il2CppGB.Platform.Utils;
+using Il2CppGB.UI;
 using Il2CppGB.UI.Menu;
 using Il2CppGB.UI.Utils.Settings;
 using Il2CppTMPro;
@@ -9,7 +12,7 @@ using UnityEngine;
 using UnityEngine.Localization.Components;
 using UnityEngine.Localization.PropertyVariants;
 using UnityEngine.UI;
-
+using static Il2CppMono.Security.X509.X520;
 using Object = UnityEngine.Object;
 
 namespace CementGB.Mod.Modules.PreferenceModule;
@@ -17,6 +20,14 @@ namespace CementGB.Mod.Modules.PreferenceModule;
 internal static class PreferenceModule 
 {
     public const string PrefsMenuObjName = "Cement Mod Settings";
+
+    private static bool setupPrefabs = false;
+
+    private static GameObject boolOptionPrefab;
+    private const string boolOptionPath = "Managers/Menu/Settings Menu/Canvas/Input Root/Controller Vibration";
+
+    private static GameObject intOptionPrefab;
+    private const string intOptionPath = "Managers/Menu/Settings Menu/Canvas/Root Settings/PingUI";
 
     internal static void Initialize()
     {
@@ -31,8 +42,61 @@ internal static class PreferenceModule
             return;
         }
 
+        if (!setupPrefabs)
+            SetupPrefabs();
+
         CreateMenuPrefsUI();
     }
+
+    
+    private static void SetupPrefabs()
+    {
+        boolOptionPrefab = SetupPrefab(boolOptionPath);
+        intOptionPrefab = SetupPrefab(intOptionPath);
+        intOptionPrefab.GetComponent<IntOptionHandler>().valueNameOverrides = null;
+
+        setupPrefabs = true;
+    }
+
+    private static GameObject SetupPrefab(string path)
+    {
+        var originalObject = GameObject.Find(path);
+        if (originalObject == null)
+        {
+            LoggingUtilities.Logger.Error("OBJECT IS NULL");
+            return null;
+        }
+        var prefab = GameObject.Instantiate(originalObject, GameObject.Find("Managers/Menu/Settings Menu/Canvas").transform);
+        GameObject.DontDestroyOnLoad(prefab);
+
+        RemoveLocalisation(prefab);
+        RemoveLocalisation(GetTitle(prefab));
+
+        prefab.SetActive(false);
+        return prefab;
+    }
+
+    private static void RemoveLocalisation(GameObject gameObject)
+    {
+        var disabledIf = gameObject.GetComponent<DisabledIfPlatform>();
+        if (disabledIf != null)
+        {
+            GameObject.Destroy(disabledIf);
+        }
+
+        var localiseStringEvent = gameObject.GetComponent<LocalizeStringEvent>();
+        if (localiseStringEvent != null)
+        {
+            GameObject.Destroy(localiseStringEvent);
+        }
+
+        var gameObjectLocaliser = gameObject.GetComponent<GameObjectLocalizer>();
+        if (gameObjectLocaliser != null)
+        {
+            GameObject.Destroy(gameObjectLocaliser);
+        }
+    }
+
 
     private static void CreateMenuPrefsUI()
     {
@@ -55,13 +119,14 @@ internal static class PreferenceModule
         for (int i = 0; i < newMenu.transform.childCount; i++)
             if (newMenu.transform.GetChild(i).name != "Reset All") Object.Destroy(newMenu.transform.GetChild(i).gameObject);
 
-        Object.Destroy(emptyButton.GetComponent<DisabledIfPlatform>());
-        Object.Destroy(emptyButton.GetComponent<LocalizeStringEvent>());
-        Object.Destroy(emptyButton.GetComponent<GameObjectLocalizer>());
+        RemoveLocalisation(emptyButton.gameObject);
 
         emptyButton.name = "Empty Button";
         emptyButton.GetComponent<TextMeshProUGUI>().text = emptyButton.name;
         emptyButton.onClick = new Button.ButtonClickedEvent();
+
+        CreateBoolOption(newMenu.transform, "Test1", false);
+        CreateIntOption(newMenu.transform, "Test2", 2);
 
         Object.Destroy(newMenu.GetComponent<InputOptions>());
 
@@ -73,11 +138,64 @@ internal static class PreferenceModule
         menuScreen.cancelEvent.AddListener(new Action(() =>
         {
             var menu = GameObject.Find("Managers/Menu").GetComponent<MenuController>();
-            menu?.PopScreen();
+            menu.PopScreen();
         }));
 
         return menuScreen;
     }
+
+    private static GameObject GetTitle(GameObject gameObject)
+    {
+        return gameObject.transform.Find("HoriSort/Title").gameObject;
+    }
+
+    private static GameObject GetValue(GameObject gameObject)
+    {
+        return gameObject.transform.Find("HoriSort/Value").gameObject;
+    }
+
+    private static GameObject CreateButton()
+    {
+        return null;
+    }
+
+    private static GameObject CreateBoolOption(Transform parent, string name, bool currentValue)
+    {
+        var option = GameObject.Instantiate(boolOptionPrefab, parent);
+        option.SetActive(true);
+
+        var optionHandler = option.GetComponent<BoolOptionHandler>();
+        optionHandler.currentValue = currentValue;
+        optionHandler.UpdateValueField();
+
+        GetTitle(option).GetComponent<TextMeshProUGUI>().text = name;
+        return option;
+    }
+
+    private static GameObject CreateIntOption(Transform parent, string name, int currentValue)
+    {
+        var option = GameObject.Instantiate(intOptionPrefab, parent);
+        option.SetActive(true);
+
+        var optionHandler = option.GetComponent<IntOptionHandler>();
+        optionHandler.Initialise(0, int.MinValue, int.MaxValue);
+        optionHandler.currentValue = currentValue;
+        optionHandler.UpdateValueField();
+
+        GetTitle(option).GetComponent<TextMeshProUGUI>().text = name;
+        return option;
+    }
+
+    private static GameObject CreateStringOption(string name, string currentValue)
+    {
+        return null;
+    }
+
+    private static GameObject CreateKeybindOption()
+    {
+        return null;
+    }
+
 
     private static Button CreatePrefsMenuEnterButton()
     {

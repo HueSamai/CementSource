@@ -29,6 +29,8 @@ public enum TokenType
     KeywordContinue,
     KeywordIn,
 
+    GlobalDirective,
+
     OpenCurlyBracket,
     ClosedCurlyBracket,
     OpenSquareBracket,
@@ -102,6 +104,11 @@ public class Lexer
         { "continue", TokenType.KeywordContinue },
         { "in", TokenType.KeywordIn }
     };
+
+    private Dictionary<string, TokenType> _directives = new() {
+        { "global", TokenType.GlobalDirective }
+    };
+
 
     private void Advance()
     {
@@ -269,6 +276,8 @@ public class Lexer
                 break;
             case '"':
                 return LexString();
+            case '@':
+                return LexDirective();
             default:
                 if (IsDigit(Current))
                     return LexNum();
@@ -403,13 +412,38 @@ public class Lexer
         return Token(char.IsUpper(id[0]) ? TokenType.ClassIdentifier : TokenType.Identifier, id, line, charIdx);
     }
 
+    private Token LexDirective()
+    {
+        int line = this.lineIdx;
+        int charIdx = this.charIdx;
+
+        // advance past @
+        Advance();
+
+        string id = "";
+        while (!IsEnd && IsIdentifier(Current))
+        {
+            id += Current;
+            Advance();
+        }
+
+        if (_directives.ContainsKey(id))
+            return Token(_directives[id], lineIdx: line, charIdx: charIdx);
+
+        Error($"Unknown directive {id}", lineIdx, charIdx);
+        return Token(TokenType.Error, "", line, charIdx);
+    }
+
     private Token Token(TokenType type, string lexeme = "", int lineIdx = -1, int charIdx = -1)
     {
         return new Token(type, lexeme, lineIdx == -1 ? this.lineIdx : lineIdx, charIdx == -1 ? this.charIdx : charIdx);
     }
 
-    private void Error(string message)
+    private void Error(string message, int lineIdx = -1, int charIdx = -1)
     {
+        if (lineIdx == -1) lineIdx = this.lineIdx;
+        if (charIdx == -1) charIdx = this.charIdx;
+
         errorManager.RaiseSyntaxError(lineIdx, charIdx, message);
     }
 }

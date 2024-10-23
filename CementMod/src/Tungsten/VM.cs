@@ -29,7 +29,7 @@ public static class VM
 
     private static int pc;
 
-    private static string[] generics;
+    private static string[] generics = null;
 
     public static bool HadError {
         get;
@@ -39,10 +39,11 @@ public static class VM
     public static void Reset()
     {
         HadError = false;
+        generics = null;
         stack.Clear();
     }
 
-    public static object? PeekStackTop()
+    public static object PeekStackTop()
     {
         return stack.Peek();
     }
@@ -137,7 +138,7 @@ public static class VM
                 break;
 
             case Opcode.JFZ:
-                object? cond = stack.Pop();
+                object cond = stack.Pop();
 
                 if (cond == null || cond.GetType() != typeof(bool))
                 {
@@ -865,14 +866,11 @@ public static class VM
     {
         do
         {
-            LoggingUtilities.VerboseLog($"LOOKING FOR MEMBER IN {type.Name}");
-
             var members = type.GetMember(name);
 
             foreach (var member in members)
                 if ((member.MemberType & memberTypes) != 0)
                     return member;
-
 
             members = type.GetMember(name, memberTypes, BindingFlags.FlattenHierarchy | BindingFlags.Instance |
                 BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
@@ -931,7 +929,7 @@ public static class VM
         return new Range(start, end, step);
     }
 
-    private static void Error(int lineIdx, string message)
+    public static void Error(int lineIdx, string message)
     {
         HadError = true;
         currentErrorManager.RaiseRuntimeError(lineIdx, message);

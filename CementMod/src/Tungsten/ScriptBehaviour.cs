@@ -13,19 +13,37 @@ public class ScriptBehaviour : MonoBehaviour
     private Script _script = null;
 
     private bool _hasUpdate;
+    private bool _hasOnGUI;
+
+    private bool _runStart = false;
+
     public void OnScriptAdded()
     {
         if (scriptName == "")
-        {
             return;
-        }
 
-        _script = Script.TryGetExisting(scriptName);
+        _script = Script.NewOf(scriptName);
+        if (_script == null) return;
+
+        _script.OnReload += OnReload;
+
+        if (_script.HasFunction("awake"))
+            _script.Run("awake");
+
+        _hasOnGUI = _script.HasFunction("onGUI");
+        _hasUpdate = _script.HasFunction("update");
+    }
+
+    private void OnReload()
+    {
         if (_script == null) return;
 
         if (_script.HasFunction("awake"))
-            _script.RunFunction("awake");
+            _script.Run("awake");
 
+        _runStart = true;
+
+        _hasOnGUI = _script.HasFunction("onGUI");
         _hasUpdate = _script.HasFunction("update");
     }
     
@@ -39,13 +57,29 @@ public class ScriptBehaviour : MonoBehaviour
         if (_script == null) return;
         
         if (_script.HasFunction("start"))
-            _script.RunFunction("start");
+            _script.Run("start");
     }
 
     private void Update()
     {
         if (_script == null) return;
+
+        if (_runStart)
+        {
+            _runStart = false;
+            if (_script.HasFunction("start"))
+                _script.Run("start");
+        }
+
         if (_hasUpdate)
-            _script.RunFunction("update");
+            _script.Run("update");
+    }
+
+    private void OnGUI()
+    {
+        if (_script == null) return;
+
+        if (_hasOnGUI)
+            _script.Run("onGUI");
     }
 }
